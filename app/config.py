@@ -26,7 +26,7 @@ class Settings(BaseSettings):
                                       # 而不是混在 content 里的 <think>。关不掉思考链时靠它兜底
     token_budget: int = 2000
     database_url: str = "mysql+asyncmy://root:root@localhost:3306/mewhelp"
-    test_database_url: str = "mysql+asyncmy://root:root@localhost:3306/mewhelp_ch02_test"
+    test_database_url: str = "mysql+asyncmy://root:root@localhost:3306/mewhelp_test"
     # 知识库检索
     embed_model: str = "BAAI/bge-m3"          # 上游真实名(无网关别名可用)
     milvus_uri: str = "http://localhost:19530"   # Lite → Standalone
@@ -40,7 +40,7 @@ class Settings(BaseSettings):
     max_agent_steps: int = 6              # ReAct 环最大步数(封顶,超则兜底)
     # token 花销不在环里卡:那是成本控制,归 跟 Langfuse 的账一起看。
     # tokens_used 仍逐步累加,进 trace 供排障和统计,只是不再当停止条件。
-    checkpointer_db_path: str = "data/ch05_checkpoints.sqlite"  # LangGraph checkpointer(data/*.db* 已 gitignore)
+    checkpointer_db_path: str = "data/checkpoints.sqlite"  # LangGraph checkpointer(data/*.db* 已 gitignore)
     # 意图识别模型配置(先求准:默认大模型;降级路仅种子,不实现运行时)
     # 意图识别、摘要各是一个模型槽位:三项留空就跟 CHAT 用同一家,
     # 想把某个用途换到别家上游(比如摘要走更便宜的托管方)才填这两组。
@@ -94,7 +94,7 @@ class Settings(BaseSettings):
     # 置信度闸(正式版):阈值由 make calibrate-confidence 在 评估集上校准回填,不拍脑袋
     # 实测:可答桶 p50=0.704 vs 应拒桶 p50=0.102/max=0.290,YoudenJ 最优点 0.17
     # 选 0.30 而非 0.17:误放代价远大于误拦,宁可多转人工也不放编造答案
-    # (可答通过率 82.9%、应拒放行率 0%,报告见 data/ch09/reports/confidence_calibration.txt,
+    # (可答通过率 82.9%、应拒放行率 0%,报告见 data/observability/reports/confidence_calibration.txt,
     # 「观测与成本」页 /observability 上也能看,推荐值与这里不一致时页面会标出来)
     evidence_confidence_threshold: float = 0.30
 

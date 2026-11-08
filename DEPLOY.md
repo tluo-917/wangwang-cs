@@ -1,4 +1,4 @@
-# MewHelp 部署任务书
+# 部署说明
 
 这份文件是写给 AI 编程助手执行的。把它交给 Claude Code、Cursor 之类的工具，说一句
 「按 DEPLOY.md 把项目部署起来」就行，它会自己走完下面的步骤。
@@ -9,7 +9,7 @@
 
 ## 目标
 
-在本机把 MewHelp 跑起来，最终验收标准只有一条：
+在本机把 MewHelp 跑起来，最终检查标准只有一条：
 
 **浏览器打开 <http://localhost:8000>，问「订单 1001 的物流到哪了」，能看到回答，
 并且回答上方出现两个工具调用标记（`query_order` 和 `query_logistics`）。**
@@ -37,7 +37,7 @@ uv sync
 
 会跑几分钟，中间长时间没输出是正常的，不要中断重试。
 
-**验收**：命令退出码为 0，`.venv/` 目录已生成。
+**检查**：命令退出码为 0，`.venv/` 目录已生成。
 
 ## 第 2 步 配置 .env
 
@@ -61,7 +61,7 @@ RERANK_API_KEY=<同一个硅基流动密钥>
 **密钥必须问用户要。** 不要从环境变量、其他项目、历史记录里翻，也不要写假值糊弄过去 ——
 假值会让第 4 步静默产出错误结果，比直接失败更难查。
 
-**验收**：`.env` 存在，三个 `*_API_KEY` 都非空。不要把密钥内容打印到终端。
+**检查**：`.env` 存在，三个 `*_API_KEY` 都非空。不要把密钥内容打印到终端。
 
 ## 第 3 步 起依赖容器
 
@@ -72,7 +72,7 @@ docker compose up -d
 拉起 MySQL、Milvus、MinIO、etcd 四个容器。建表不用管，`sql/` 已经挂进 MySQL 的
 初始化目录，首次启动会自动按序执行。
 
-**验收**：`docker compose ps` 里 mysql 和 milvus 都是 healthy。
+**检查**：`docker compose ps` 里 mysql 和 milvus 都是 healthy。
 
 > **头半分钟 MinIO 显示 starting 是正常的**，Docker 每 30 秒才做一次健康检查，刚起来那会儿
 > 第一次还没轮到。等一下它会变成 healthy，四个容器最终都是 healthy。
@@ -103,7 +103,7 @@ docker compose up -d
 
 ```bash
 make seed        # FAQ(query_faq 的数据源)
-make seed-conv   # 历史会话(ch03 挖知识用)
+make seed-conv   # 历史会话(挖知识用)
 ```
 
 订单和物流不在这里，它们是 `app/tools/business.py` 里按 user_id 稳定生成的模拟数据，
@@ -112,7 +112,7 @@ make seed-conv   # 历史会话(ch03 挖知识用)
 第 3 步首启时这两个脚本已经自动跑过一遍了，这里再跑是为了重复部署或数据被改乱时重灌。
 种子脚本幂等，重复执行不会出问题。
 
-**验收**：`docker exec -i mewhelp-mysql mysql -uroot -proot mewhelp -e "SELECT COUNT(*) FROM faq;"`
+**检查**：`docker exec -i mewhelp-mysql mysql -uroot -proot mewhelp -e "SELECT COUNT(*) FROM faq;"`
 返回的数字大于 0。
 
 ## 第 5 步 建知识库
@@ -122,7 +122,7 @@ make kb-build       # 切 chunk 落 MySQL
 make kb-vectorize   # 向量化写进 Milvus，这步会调用上游嵌入接口
 ```
 
-**验收**：`kb-vectorize` 输出里 Milvus 现有条数大于 0。
+**检查**：`kb-vectorize` 输出里 Milvus 现有条数大于 0。
 
 这一步失败通常是密钥或网络问题，不是代码问题 —— 先回到第 2 步核对密钥，不要改代码。
 
@@ -139,9 +139,9 @@ make dev
 （关掉 MCP Server 和应用进程）。人工前台跑的话，Ctrl+C 就停了。启动要等几十秒，
 因为它会等 Milvus 就绪才继续，这是正常的。
 
-**验收**：`curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/` 返回 200。
+**检查**：`curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/` 返回 200。
 
-## 第 7 步 验收
+## 第 7 步 检查
 
 ```bash
 printf '{"user_id":"u1","message":"订单 1001 的物流到哪了"}' > /tmp/q.json
@@ -149,7 +149,7 @@ curl -s --max-time 90 http://localhost:8000/api/agent \
      -H 'Content-Type: application/json' --data-binary @/tmp/q.json
 ```
 
-**验收**：返回的 JSON 里 `tool_calls` 数组包含 `query_order` 和 `query_logistics` 两项，
+**检查**：返回的 JSON 里 `tool_calls` 数组包含 `query_order` 和 `query_logistics` 两项，
 `answer` 里有物流状态。
 
 只有 `answer` 没有 `tool_calls`，说明模型没有触发工具调用，通常是 `CHAT_MODEL` 写的
@@ -159,7 +159,4 @@ curl -s --max-time 90 http://localhost:8000/api/agent \
 
 ## 完成之后
 
-用一段话告诉用户：跑通了、访问地址是 <http://localhost:8000>、以及验收那一步实际
-调用了哪几个工具。
-
-不要顺手改动项目代码。这份任务书里的步骤如果和实际不符，报告差异，让用户来定。
+浏览器打开 <http://localhost:8000>。上一步的 JSON 里应能看到 `query_order` 和 `query_logistics`。

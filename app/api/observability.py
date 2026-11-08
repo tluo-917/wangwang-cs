@@ -2,11 +2,11 @@
 
 三块各有自己的权威源,这里只负责端出去:
 
-- 意图成本账:`data/ch09/reports/cost_by_intent.json`(make cost-report 落的产物),
+- 意图成本账:`data/observability/reports/cost_by_intent.json`(make cost-report 落的产物),
  平均 token 与占比都是脚本算好写进去的,这里不复算——不然页面和终端会有两个数。
 - 评估趋势:`eval_runs` 表就是趋势本身的权威源(make eval-flywheel 每轮插一行),
  所以直接读表,不去读那份文本报告。涨跌箭头由页面按同一批行算,不是另一份数据。
-- 置信度阈值校准:`data/ch09/reports/confidence_calibration.json`(make calibrate-confidence),
+- 置信度阈值校准:`data/observability/reports/confidence_calibration.json`(make calibrate-confidence),
  另带一份「当前在用的阈值」,让人看得出推荐值和线上值对不对得上。
 
 每块的「读图」小注也来自产物(脚本落盘时让模型看着那一轮的数写的),这里只端出去。
@@ -28,7 +28,7 @@ from app.db import repository
 
 router = APIRouter(prefix="/api/observability")
 
-REPORT_DIR = pathlib.Path(__file__).resolve().parents[2] / "data/ch09/reports"
+REPORT_DIR = pathlib.Path(__file__).resolve().parents[2] / "data/observability/reports"
 COST = REPORT_DIR / "cost_by_intent.json"
 CALIB = REPORT_DIR / "confidence_calibration.json"
 TREND_NOTE = REPORT_DIR / "eval_trend_note.json"

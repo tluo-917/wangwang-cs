@@ -2,7 +2,7 @@
 evidence_confidence 分布,扫阈值取 Youden J(=可答通过率 - 应拒放行率)最大的分离点。
 输出分布表 + 推荐阈值 → 人工回填 settings.evidence_confidence_threshold(不拍脑袋)。
 运行:make calibrate-confidence(需 milvus + 上游可调通 + 知识库已建)。
-产物:data/ch09/reports/confidence_calibration.{txt,json};「观测与成本」页只读这份 json。
+产物:data/observability/reports/confidence_calibration.{txt,json};「观测与成本」页只读这份 json。
 """
 import asyncio
 import json
@@ -14,7 +14,7 @@ from app.core import read_notes, retrieval
 from app.core.confidence import compute_evidence_confidence
 
 _ROOT = pathlib.Path(__file__).resolve().parent.parent
-_OUT_DIR = _ROOT / "data/ch09/reports"
+_OUT_DIR = _ROOT / "data/observability/reports"
 _OUT = _OUT_DIR / "confidence_calibration.txt"
 _OUT_JSON = _OUT_DIR / "confidence_calibration.json"
 ANSWERABLE = {"A_policy", "B_model", "C_colloquial", "E_multi"}
@@ -48,7 +48,7 @@ def _dist(name, xs) -> dict | None:
 
 
 async def main():
-    samples = [json.loads(ln) for ln in open("tests/data/eval_ch04.jsonl")]
+    samples = [json.loads(ln) for ln in open("tests/data/rag_eval.jsonl")]
     results = await asyncio.gather(*(_conf(s) for s in samples))
     answerable = [c for b, c in results if b in ANSWERABLE]
     absent = [c for b, c in results if b == "D_absent"]
@@ -71,7 +71,7 @@ async def main():
         if j > best_j:
             best_t, best_j = t, j
     _log(f"\n推荐阈值 evidence_confidence_threshold = {best_t:.2f}(Youden J={best_j:.3f})")
-    _log("请回填 app/config.py 默认值,并在 dev-notes/ch09.md 记录本次校准。")
+    _log("请把推荐阈值回填到 app/config.py 的默认值。")
 
     pick = next((r for r in scan if r["t"] == round(best_t, 2)), None)
     recommended = {"threshold": round(best_t, 2), "youden_j": round(best_j, 3),
@@ -96,7 +96,7 @@ async def main():
     _OUT.write_text("\n".join(_LINES) + "\n", encoding="utf-8")
     _OUT_JSON.write_text(json.dumps({
         "meta": {"generated_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
-                 "strategy": "hybrid_rerank", "dataset": "tests/data/eval_ch04.jsonl",
+                 "strategy": "hybrid_rerank", "dataset": "tests/data/rag_eval.jsonl",
                  "n_answerable": len(answerable), "n_absent": len(absent)},
         "distribution": dist,
         "scan": scan,

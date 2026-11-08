@@ -1,7 +1,7 @@
 """Cost Control:按意图统计 token 花销(README:「按意图把 token 分堆一算,
 哪类意图最烧钱立马现形」)。数据源 = Langfuse Metrics API(意图在 classify_intent 打成 intent:xxx tag)。
 运行:make cost-report(DAYS=N 窗口天数,默认 7;需 Langfuse 在跑且 .env 配好三变量)。
-产物:data/ch09/reports/cost_by_intent.{txt,json};「观测与成本」页只读这份 json,不另算一份。
+产物:data/observability/reports/cost_by_intent.{txt,json};「观测与成本」页只读这份 json,不另算一份。
 
 实测口径(自部署 Langfuse v3.218,SDK 走 api.legacy.metrics_v1 的 v1 端点;
 v4 typed client 的 metrics 需 server v4 write mode):v1 只开放 observations/scores 视图
@@ -22,7 +22,7 @@ from app.core import read_notes
 from app.core.observability import get_langfuse
 
 _ROOT = pathlib.Path(__file__).resolve().parent.parent
-_OUT_DIR = _ROOT / "data/ch09/reports"
+_OUT_DIR = _ROOT / "data/observability/reports"
 _OUT = _OUT_DIR / "cost_by_intent.txt"
 _OUT_JSON = _OUT_DIR / "cost_by_intent.json"
 

@@ -87,8 +87,8 @@
 
       if (!d.eval.present) {
         const p = panel("错例复核");
-        p.appendChild(missingBox(d.eval.hint || "评测产物还没生成，先跑 make ch10-eval"));
-        if (jobSpecs["ch10-eval"]) p.appendChild(jobRow([jobSpecs["ch10-eval"]], load));
+        p.appendChild(missingBox(d.eval.hint || "评测产物还没生成，先跑 make clf-eval"));
+        if (jobSpecs["clf-eval"]) p.appendChild(jobRow([jobSpecs["clf-eval"]], load));
         body.appendChild(p);
         return;
       }
@@ -171,7 +171,7 @@
         pList.appendChild(card);
       }
       pList.appendChild(el("div", "legend"));
-      if (jobSpecs["ch10-eval"]) pList.appendChild(jobRow([jobSpecs["ch10-eval"]], load,
+      if (jobSpecs["clf-eval"]) pList.appendChild(jobRow([jobSpecs["clf-eval"]], load,
         "重跑评测会刷新这份错例清单"));
       body.appendChild(pList);
     }

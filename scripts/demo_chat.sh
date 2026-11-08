@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 验收:两轮流式对话,第二轮须接住第一轮上下文
+# 两轮流式对话,第二轮须接住第一轮上下文
 set -euo pipefail
 SID="demo-$$"
 

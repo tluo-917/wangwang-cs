@@ -7,7 +7,7 @@ from app.kb import chunking, documents
 from app.kb.sources import KB_DIR, SOURCE_TYPES as DOCS
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-SEED_SQL = ROOT / "sql" / "ch03-seed.sql"
+SEED_SQL = ROOT / "sql" / "04-knowledge-seed.sql"
 
 
 def _preview(text: str, n: int = 46) -> str:

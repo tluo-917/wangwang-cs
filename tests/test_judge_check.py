@@ -17,7 +17,7 @@ class _Row:
 
 
 def test_角标原文拼回评估时那份证据():
-    # 格式与 eval_ch04._format_evidence 逐字一致:[n] 问题:答案,一条一行
+    # 格式与 eval_rag._format_evidence 逐字一致:[n] 问题:答案,一条一行
     assert evidence_from_citations(CITS) == (
         "[1] 退款时效:到账时效以平台售后规则为准。\n[2] 处理时限:退款 3 个工作日。")
 

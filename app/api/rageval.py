@@ -1,6 +1,6 @@
 """RAG 评估页的只读 API:把 make eval-rag 落下的那份报告端出去,不重算。
 
-页面上的每个数都来自 data/ch04/reports/rag_eval.json——那是评估脚本跑完写下的产物。
+页面上的每个数都来自 data/rag/reports/rag_eval.json——那是评估脚本跑完写下的产物。
 API 不复算 MRR、不复判覆盖度:一旦这里也算一遍,页面和终端就会有两个真相,谁对都说不清。
 
 产物没跑过不是错误:回 present=false + 该按哪个作业,页面据此长出「去跑一次」而不是白屏。
@@ -18,7 +18,7 @@ from app.schemas.rageval import FaithCaseStatusRequest
 
 router = APIRouter(prefix="/api/rag-eval")
 
-REPORT = pathlib.Path(__file__).resolve().parents[2] / "data/ch04/reports/rag_eval.json"
+REPORT = pathlib.Path(__file__).resolve().parents[2] / "data/rag/reports/rag_eval.json"
 TEXT_LOG = REPORT.with_name("rag_eval.txt")
 JOB = "eval-rag"          # 重跑按钮按的就是终端那条 make eval-rag
 STRATEGIES = ("vector", "bm25", "hybrid", "hybrid_rerank")
@@ -56,8 +56,8 @@ def _best_strategy(report: dict) -> dict:
 async def overview() -> dict:
     report = _read()
     job = {"specs": [jobs.status(JOB)], "artifacts": {
-        "json": _stat(REPORT) | {"path": "data/ch04/reports/rag_eval.json"},
-        "text": _stat(TEXT_LOG) | {"path": "data/ch04/reports/rag_eval.txt"},
+        "json": _stat(REPORT) | {"path": "data/rag/reports/rag_eval.json"},
+        "text": _stat(TEXT_LOG) | {"path": "data/rag/reports/rag_eval.txt"},
     }}
     if report is None:
         return {"present": False, "job": job,

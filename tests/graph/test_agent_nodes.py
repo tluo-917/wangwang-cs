@@ -74,7 +74,7 @@ async def test_agent_tools_executes_normal_tool(monkeypatch, builtin_only_specs)
 @pytest.mark.asyncio
 async def test_agent_tools_create_ticket_missing_args_no_interrupt(monkeypatch, builtin_only_specs):
     """create_ticket 缺必填 → 不弹确认卡,交引擎按「校验拦下」回灌(模型据此追问用户)。
- 确认流两分支(interrupt→resume)在 tests/graph/test_ch08_confirm_ticket.py 做 graph 级覆盖。"""
+ 确认流两分支(interrupt→resume)在 tests/graph/test_confirm_ticket.py 做 graph 级覆盖。"""
     from langchain_core.messages import ToolMessage
 
     from app.tools.engine import ToolRun

@@ -28,7 +28,7 @@ class _Faith(BaseModel):
 
 
 def evidence_from_citations(citations) -> str:
-    """把台账里的角标原文拼回评估时那份证据文本(格式与 eval_ch04._format_evidence 一致)。"""
+    """把台账里的角标原文拼回评估时那份证据文本(格式与 eval_rag._format_evidence 一致)。"""
     return "\n".join(f"[{c.get('n', i + 1)}] {c.get('question', '')}:{c.get('answer', '')}"
                      for i, c in enumerate(citations or []))
 
@@ -52,7 +52,7 @@ def verdict_row(case_id: str, status: str, faithful: bool | None) -> dict:
 
 async def _judge_one(row, judge, sem) -> dict:
     # 重试一次:这条通道偶发回一个空 completion(解析成 None),记成「调用失败」会被误读成
-    # 「裁判判反了」。同 eval_ch04._try 的处理——先退一步重试,仍失败才记账
+    # 「裁判判反了」。同 eval_rag._try 的处理——先退一步重试,仍失败才记账
     async with sem:
         for attempt in (1, 2):
             try:

@@ -119,7 +119,7 @@
       exams.appendChild(el("div", "stage", "分层切卷 80/10/10"));
       exams.appendChild(el("b", "", SPLIT_KEYS.map((k) => sp[k].size).join(" / ")));
       exams.appendChild(el("div", "desc", "训练 / 验证 / 测试；训练集另做增强与定向补数"));
-      exams.appendChild(el("div", "f", "data/ch10/dataset/*.jsonl"));
+      exams.appendChild(el("div", "f", "data/classifier/dataset/*.jsonl"));
       flow.appendChild(exams);
       pFlow.appendChild(flow);
       pFlow.appendChild(fileTable([...d.lineage, d.sample_review]));
@@ -127,7 +127,7 @@
         "人工抽审文件 sample_review.md 是给人读的那一份（真实池全量 + 每类模拟抽 5），"
         + "看到错标就直接改语料，不许改考卷去凑分。"));
       pFlow.appendChild(jobRow(
-        ["ch10-corpus", "ch10-dataset"].map((n) => jobSpecs[n]).filter(Boolean), load));
+        ["clf-corpus", "clf-dataset"].map((n) => jobSpecs[n]).filter(Boolean), load));
       body.appendChild(pFlow);
 
       /* ② 三份考卷 + 泄漏自检 */
@@ -196,7 +196,7 @@
         + "；写入于 " + fmtTime(d.model.threshold_file.mtime)
         + "，" + fmtBytes(d.model.threshold_file.bytes) + "。"));
       pModel.appendChild(thr);
-      pModel.appendChild(jobRow([jobSpecs["ch10-train"]].filter(Boolean), load,
+      pModel.appendChild(jobRow([jobSpecs["clf-train"]].filter(Boolean), load,
         "训练是分钟级重活，会覆盖现有权重"));
       body.appendChild(pModel);
 
@@ -215,7 +215,7 @@
         pOnnx.appendChild(missingBox(ex.hint));
       }
       pOnnx.appendChild(jobRow(
-        ["ch10-export", "classifier-up", "classifier-down"].map((n) => jobSpecs[n]).filter(Boolean),
+        ["clf-export", "classifier-up", "classifier-down"].map((n) => jobSpecs[n]).filter(Boolean),
         load));
       body.appendChild(pOnnx);
     }

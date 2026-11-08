@@ -20,19 +20,19 @@ from app.db import repository
 
 router = APIRouter(prefix="/api/acceptance")
 
-CH10 = pathlib.Path("data/ch10")
-REPORTS = CH10 / "reports"
-DATASET = CH10 / "dataset"
-MODEL = CH10 / "model"
-ONNX = CH10 / "onnx"
+CLF_DATA = pathlib.Path("data/classifier")
+REPORTS = CLF_DATA / "reports"
+DATASET = CLF_DATA / "dataset"
+MODEL = CLF_DATA / "model"
+ONNX = CLF_DATA / "onnx"
 CLASSIFIER = "http://127.0.0.1:8110"
 
 # 语料血缘的四段落差:捞池 → 脱敏去重 → 预标+模拟补足 → 分层切卷。
 # 每段配一句「这一步在干什么」,页面直接显示,读者不必回去翻脚本。
 LINEAGE = (
-    ("corpus_raw.jsonl", "捞池", "低置信度问题池原始问法(标准化问法优先)", "ch10-corpus"),
-    ("corpus_clean.jsonl", "脱敏去重", "去手机号/单号 → 去重 → LLM 修错别字 → 再去重", "ch10-corpus"),
-    ("corpus_labeled.jsonl", "预标 + 模拟补足", "LLM 预标真实问题,再按类补造到每类 100 条", "ch10-corpus"),
+    ("corpus_raw.jsonl", "捞池", "低置信度问题池原始问法(标准化问法优先)", "clf-corpus"),
+    ("corpus_clean.jsonl", "脱敏去重", "去手机号/单号 → 去重 → LLM 修错别字 → 再去重", "clf-corpus"),
+    ("corpus_labeled.jsonl", "预标 + 模拟补足", "LLM 预标真实问题,再按类补造到每类 100 条", "clf-corpus"),
 )
 SPLITS = (("train", "训练集(含增强与定向补数)"), ("val", "验证集(挑轮次 + 定阈值)"),
           ("test", "测试集(留出考卷,只在评测用一次)"))
@@ -124,10 +124,10 @@ def _threshold_in_use() -> float | None:
 async def overview() -> dict:
     """总览:九个区块各给一句结论 + 一个闸门状态(pass / fail / missing)。
  状态口径:missing = 产物还没有;fail = 跑过但没过线;pass = 跑过且过线。"""
-    golden = _load_report("golden_report.json", "ch10-golden")
-    evaluation = _load_report("eval_report.json", "ch10-eval")
-    scan = _load_report("threshold_scan.json", "ch10-threshold-scan")
-    export = _load_report("export_report.json", "ch10-export")
+    golden = _load_report("golden_report.json", "clf-golden")
+    evaluation = _load_report("eval_report.json", "clf-eval")
+    scan = _load_report("threshold_scan.json", "clf-threshold-scan")
+    export = _load_report("export_report.json", "clf-export")
     classify = _load_report("classify_run.json", "classify-pool")
     ds = _split_stats()
     health = await _probe_classifier()
@@ -152,7 +152,7 @@ async def overview() -> dict:
             return "还没跑过,点右下按钮现场跑一遍"
         return yes if ok else no
 
-    corpus_lines = {f: _stat(CH10 / f).get("lines") for f, *_ in LINEAGE}
+    corpus_lines = {f: _stat(CLF_DATA / f).get("lines") for f, *_ in LINEAGE}
     blocks = [
         {"key": "data", "no": 1, "title": "语料与数据集", "page": "/acceptance/data",
          "status": gate(bool(ds["splits"]["test"]["size"]), ds["clean"]),
@@ -162,7 +162,7 @@ async def overview() -> dict:
                       f"{ds['splits']['train']['size']}/{ds['splits']['val']['size']}"
                       f"/{ds['splits']['test']['size']} 训练/验证/测试"),
          "note": "考卷与练习题零重叠" if ds["clean"] else "训练集与考卷有重叠,分数不作数",
-         "jobs": ["ch10-corpus", "ch10-dataset"]},
+         "jobs": ["clf-corpus", "clf-dataset"]},
         {"key": "golden", "no": 2, "title": "黄金样例闸", "page": None,
          "status": gate(golden.get("present", False), golden.get("passed")),
          "headline": (f"通过率 {golden['rate']:.0%}(闸线 {golden['pass_line']:.0%}),"
@@ -171,7 +171,7 @@ async def overview() -> dict:
          "note": (f"{len(golden.get('failures', []))} 条错例;不过线就改 prompt,"
                   "不许改黄金样例来凑分" if golden.get("present")
                   else "还没跑过,点右下按钮现场跑一遍"),
-         "jobs": ["ch10-golden"]},
+         "jobs": ["clf-golden"]},
         {"key": "train", "no": 3, "title": "训练产物", "page": "/acceptance/data",
          "status": gate(all(v["present"] for v in trio.values()),
                         all(v["present"] for v in trio.values())),
@@ -180,7 +180,7 @@ async def overview() -> dict:
                       f"tokenizer · threshold {_threshold_in_use()}"),
          "note": "三件套齐全,评测与服务都读 threshold.json"
                  if all(v["present"] for v in trio.values()) else "权重三件套不全",
-         "jobs": ["ch10-train"]},
+         "jobs": ["clf-train"]},
         {"key": "export", "no": 4, "title": "ONNX 导出与服务", "page": None,
          "status": gate(export.get("present", False),
                         export.get("passed") and health["online"]),
@@ -189,7 +189,7 @@ async def overview() -> dict:
                       f"{'在线' if health['online'] else '离线'}"
                       if export.get("present") else export.get("hint", "")),
          "note": "导出后必须逐条对齐 torch 才放行",
-         "jobs": ["ch10-export", "classifier-up", "classifier-down"]},
+         "jobs": ["clf-export", "classifier-up", "classifier-down"]},
         {"key": "eval", "no": 5, "title": "测试集评测", "page": "/acceptance/eval",
          "status": gate(evaluation.get("present", False), evaluation.get("red_line_passed")),
          "headline": (f"micro-F1 {evaluation['micro']['f1']:.3f} · "
@@ -198,7 +198,7 @@ async def overview() -> dict:
                       if evaluation.get("present") else evaluation.get("hint", "")),
          "note": note(evaluation.get("present", False), evaluation.get("red_line_passed"),
                       "严档 F1 ≥ 0.9、中档 ≥ 0.8 全部达标", "有类目跌破容错红线,回头搞数据"),
-         "jobs": ["ch10-eval"]},
+         "jobs": ["clf-eval"]},
         {"key": "threshold", "no": 6, "title": "阈值扫描", "page": "/acceptance/eval",
          "status": gate(scan.get("present", False), scan.get("consistent")),
          "headline": (f"九候选线重演,当选 {scan['best_threshold']}"
@@ -207,7 +207,7 @@ async def overview() -> dict:
          "note": note(scan.get("present", False), scan.get("consistent"),
                       f"与 threshold.json 在用的 {scan.get('in_use_threshold')} 一致",
                       "重演结果与在用阈值不一致"),
-         "jobs": ["ch10-threshold-scan"]},
+         "jobs": ["clf-threshold-scan"]},
         {"key": "matrix", "no": 7, "title": "混淆矩阵", "page": "/acceptance/eval",
          "status": gate(evaluation.get("present", False), True),
          "headline": (f"{evaluation['total_cells']} 道是非题错 "
@@ -215,14 +215,14 @@ async def overview() -> dict:
                       f"冤枉 {evaluation['total_fp']} · 放跑 {evaluation['total_fn']}"
                       if evaluation.get("present") else evaluation.get("hint", "")),
          "note": "要紧的不是错几个,是错的方向",
-         "jobs": ["ch10-eval"]},
+         "jobs": ["clf-eval"]},
         {"key": "errors", "no": 8, "title": "错例复核", "page": "/acceptance/errors",
          "status": gate(evaluation.get("present", False), True),
          "headline": (f"{len(evaluation.get('errors', []))} 条错例,"
                       f"记 {sum(e['matrix_entries'] for e in evaluation.get('errors', []))} 笔矩阵账"
                       if evaluation.get("present") else evaluation.get("hint", "")),
          "note": "错例条数 ≠ 矩阵笔数:错位一条记两笔",
-         "jobs": ["ch10-eval"]},
+         "jobs": ["clf-eval"]},
         {"key": "classify", "no": 9, "title": "旁路批量归类", "page": "/topics",
          "status": gate(classify.get("present", False), classify.get("status") != "failed"),
          "headline": ((f"上次归类写入 {classify['written']} 条"
@@ -244,8 +244,8 @@ async def overview() -> dict:
 @router.get("/eval")
 async def eval_detail() -> dict:
     """评测详情页数据:每类 P/R/F1/support/红线、混淆矩阵、micro vs macro、阈值扫描九候选线。"""
-    evaluation = _load_report("eval_report.json", "ch10-eval")
-    scan = _load_report("threshold_scan.json", "ch10-threshold-scan")
+    evaluation = _load_report("eval_report.json", "clf-eval")
+    scan = _load_report("threshold_scan.json", "clf-threshold-scan")
     return {"eval": evaluation, "scan": scan,
             "threshold_in_use": _threshold_in_use(),
             "severity": SEVERITY, "classifier": await _probe_classifier()}
@@ -255,17 +255,17 @@ async def eval_detail() -> dict:
 async def data_detail() -> dict:
     """数据产物页数据:语料血缘四段 + 文件盘点 + 三份考卷分布与重叠自检 + 训练/ONNX 产物。"""
     lineage = [{"file": f, "stage": stage, "desc": desc, "make": target,
-                **_stat(CH10 / f)} for f, stage, desc, target in LINEAGE]
+                **_stat(CLF_DATA / f)} for f, stage, desc, target in LINEAGE]
     return {
         "lineage": lineage,
         "dataset": _split_stats(),
-        "sample_review": _stat(CH10 / "sample_review.md"),
+        "sample_review": _stat(CLF_DATA / "sample_review.md"),
         "model": {"files": [_stat(p) for p in sorted(MODEL.glob("*")) if p.is_file()],
                   "threshold": _threshold_in_use(),
                   "threshold_file": _stat(MODEL / "threshold.json"),
                   "trio_ok": all((MODEL / n).exists() for n in MODEL_TRIO)},
         "onnx": {"files": [_stat(p) for p in sorted(ONNX.glob("*")) if p.is_file()],
-                 "report": _load_report("export_report.json", "ch10-export")},
+                 "report": _load_report("export_report.json", "clf-export")},
         "topic_names": list(TOPIC_NAMES),
     }
 
@@ -276,7 +276,7 @@ async def errors_detail() -> dict:
 
  配对统计是机器算的:把「该打没打的类 ← 反而打了的类」按对计数,同一对反复出现
  就是两类之间有边界摩擦,补对照句要成对补。补哪些句子是人的判断,页面不替人编。"""
-    evaluation = _load_report("eval_report.json", "ch10-eval")
+    evaluation = _load_report("eval_report.json", "clf-eval")
     if not evaluation.get("present"):
         return {"eval": evaluation, "errors": [], "kinds": {}, "pairs": []}
     errors = evaluation.get("errors", [])

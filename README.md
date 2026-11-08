@@ -54,7 +54,7 @@ make dev                  # 启动应用 :8000，以及物流/售后 MCP :8101/:
 - 在验证集上扫描分类阈值，再导出 ONNX，用一批样本核对和 PyTorch 的预测一致
 - 推理服务跑在 `:8110`，只依赖 ONNX Runtime，不加载训练框架。结果进主题分布页 `/topics`
 
-训练命令是 `make ch10-train`，导出是 `make ch10-export`，拉起推理是 `make classifier-up`。这是编码器分类模型的全参微调，不是对话大模型的指令微调或 LoRA。
+训练命令是 `make clf-train`，导出是 `make clf-export`，拉起推理是 `make classifier-up`。这是编码器分类模型的全参微调，不是对话大模型的指令微调或 LoRA。
 
 ## 代码结构
 

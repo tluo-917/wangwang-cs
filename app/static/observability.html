@@ -212,7 +212,7 @@
     function trendPanel(d) {
       const p = el("div", "panel");
       panelHead(p, "评估趋势", ["数据源 eval_runs 表", "info"],
-        "飞轮持续往知识库写东西,评估流水线就是拿来防劣化的。每轮复用 ch04 那套评估集,"
+        "飞轮持续往知识库写东西,评估流水线就是拿来防劣化的。每轮复用同一套检索评估集,"
         + "分数落一行,连起来就是趋势。哪天审核放进脏知识把忠实度拉下来,这张表第一时间标出来。");
       if (d.status === "error") {
         p.appendChild(missingBox("趋势读不到:" + (d.note || "")));
@@ -309,7 +309,7 @@
 
     function calibrationPanel(d) {
       const p = el("div", "panel");
-      panelHead(p, "置信度阈值校准", ["ch04 评估集实跑", "info"],
+      panelHead(p, "置信度阈值校准", ["评估集实跑", "info"],
         "兜底那道闸卡在什么分上,不是拍脑袋定的。拿评估集里可答的和该拒的两拨题各算一遍"
         + "证据置信度,再扫一遍阈值,看哪条线把两拨分得最开。");
       const w = d.weights;

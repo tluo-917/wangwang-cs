@@ -102,7 +102,7 @@ def test_通道吃掉_tool_calls_同步路径也一样(fake):
 
 async def test_瞬时故障也重试一次_不影响下一次调用(fake):
     # 429 / 超时是瞬时的,重试一次值得。但失败不许留下任何跨调用的状态:
-    # eval-ch04 跑几百次裁判,一次限流不该影响后半程的行为,不然这轮分数跟上轮不可比
+    # 检索评估会跑几百次裁判,一次限流不该影响后半程,不然这轮分数跟上轮不可比
     calls = fake(FC_TRANSIENT_ERR)
     with pytest.raises(TimeoutError):
         await llm.structured(_Check, model="gpt-5.5").ainvoke("证据够不够")

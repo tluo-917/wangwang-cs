@@ -3,7 +3,7 @@
 运行:make eval-flywheel(TRIGGER=手动|定时,默认手动)。cron 示例:
  0 6 * * * cd /path/to/mewhelp && make eval-flywheel TRIGGER=定时 >> log/eval.log 2>&1
 趋势:读最近 10 轮,对比上一轮涨跌;任何指标下滑标 ⚠——README:「重点全在这条趋势线上」。
-产物:data/ch09/reports/eval_trend.txt(趋势本身的权威源是 eval_runs 表,
+产物:data/observability/reports/eval_trend.txt(趋势本身的权威源是 eval_runs 表,
 「观测与成本」页直接读表,不读这份文本,免得同一条趋势有两个出处)。
 另落 eval_trend_note.json:模型看着这一轮的涨跌写的读图小注,带上它描述的轮次 id,
 页面只在这个 id 还是最新一轮时才用它。
@@ -20,7 +20,7 @@ from app.core import llm, read_notes
 from app.core.llm import get_chat_model
 from app.core.prompts import FAITHFULNESS_PROMPT, RAG_ANSWER_PROMPT
 from app.db import repository
-from scripts.eval_ch04 import (
+from scripts.eval_rag import (
     GRADED_BUCKETS,
     RECALL_K,
     _format_evidence,
@@ -35,8 +35,8 @@ from scripts.eval_ch04 import (
 )
 
 _ROOT = pathlib.Path(__file__).resolve().parent.parent
-_OUT = _ROOT / "data/ch09/reports/eval_trend.txt"
-_NOTE = _ROOT / "data/ch09/reports/eval_trend_note.json"
+_OUT = _ROOT / "data/observability/reports/eval_trend.txt"
+_NOTE = _ROOT / "data/observability/reports/eval_trend_note.json"
 _METRICS = ("recall_at_5", "mrr", "faithfulness", "refusal_rate")
 _LINES: list[str] = []
 
@@ -140,7 +140,7 @@ async def main():
     ap.add_argument("--triggered-by", default="手动", choices=["手动", "定时"])
     args = ap.parse_args()
 
-    _log(f"=== ch09 评估流水线(触发:{args.triggered_by})===")
+    _log(f"=== 评估流水线(触发:{args.triggered_by})===")
     result = await run_once()
     m = result["metrics"]
     _log(f"本轮:Recall@5={m['recall_at_5']:.3f} MRR={m['mrr']:.3f} "

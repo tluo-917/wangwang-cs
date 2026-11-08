@@ -1,6 +1,6 @@
-"""ch10 预标质量闸:黄金样例上标签集合完全一致率 ≥ 80% 才放行批量预标。
+"""预标质量闸:黄金样例上标签集合完全一致率 ≥ 80% 才放行批量预标。
 运行:make ch10-golden(需聊天上游)。不过线就改 prompt,不许改黄金样例来凑分。
-落 reports/golden_report.json 给验收页读(/acceptance),错例带标准/预标对照。"""
+落 reports/golden_report.json 给页读(/acceptance),错例带标准/预标对照。"""
 import asyncio
 import datetime as dt
 import json

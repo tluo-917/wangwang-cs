@@ -1,4 +1,4 @@
-/* ch10 验收页共享脚本:四个页面公用的取数、提示、导航、以及「重跑」按钮那一套。
+/* 页共享脚本:四个页面公用的取数、提示、导航、以及「重跑」按钮那一套。
 
 重跑的交互契约:POST 发起 → 每 1.2s 轮询状态与日志尾 → 收到终态(ok/failed/stopped)
 停止轮询、回调页面重新取数。作业名是后端白名单里的常量,前端只传名字。 */
@@ -45,7 +45,7 @@ const fmtBytes = (n) => {
 };
 
 /** 三位小数 + 一条横条:F1 这类 0~1 的分数统一这样画,能扫出高低。
-    hi/lo 只在给了红线时才上色——没有线就不该有"及格/不及格"的暗示。 */
+  hi/lo 只在给了红线时才上色——没有线就不该有"及格/不及格"的暗示。 */
 function scoreCell(v, redLine) {
   const td = el("td", "num");
   const box = el("div", "cell-bar");
@@ -66,7 +66,7 @@ const STATUS_LABEL = {
 };
 
 /* 日志尾缓存:作业跑完会回调页面重新取数,取数把按钮和日志窗口整个重建。
-   缓存按作业名留着,重建时贴回去——不然日志恰好在跑完那一刻消失,结论就读不到了。 */
+  缓存按作业名留着,重建时贴回去——不然日志恰好在跑完那一刻消失,结论就读不到了。 */
 const JOB_LOGS = {};
 
 /**
@@ -154,7 +154,7 @@ function jobRow(specs, onFinish, extraNote) {
 }
 
 /** 读图小注:产物里带着模型看这一轮数写的那句就用它,数字自动加粗;没有才用页面写死的兜底句。
- *  注是脚本落盘时生成并校过数的(app/core/read_notes.py),页面这边只负责显示,不再自己下结论。 */
+ * 注是脚本落盘时生成并校过数的(app/core/read_notes.py),页面这边只负责显示,不再自己下结论。 */
 function readNoteHtml(note, fallbackHtml) {
   if (!note) return fallbackHtml;
   const esc = String(note).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));

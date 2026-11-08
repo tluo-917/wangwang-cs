@@ -1,4 +1,4 @@
-# 生成上交用 Word 技术文档
+# 生成项目技术说明 Word
 from docx import Document
 from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_LINE_SPACING
@@ -146,7 +146,7 @@ def main():
     # ---- 封面 ----
     for _ in range(3):
         add_p(doc, "", space_after=0, first_line=False)
-    add_p(doc, "课程实践 / 项目技术文档", size=14, align="center", space_after=24, first_line=False, east="黑体")
+    add_p(doc, "项目技术文档", size=14, align="center", space_after=24, first_line=False, east="黑体")
     add_p(doc, "基于大模型与 RAG 的电商智能客服系统", size=22, bold=True, align="center", space_after=8, first_line=False, east="黑体")
     add_p(doc, "技术说明文档", size=18, bold=True, align="center", space_after=28, first_line=False, east="黑体")
     add_p(doc, "（大模型接入、提示词工程与检索增强生成）", size=14, align="center", space_after=36, first_line=False, east="楷体")
@@ -156,25 +156,12 @@ def main():
         ["项目", "内容"],
         [
             ["系统名称", "MewHelp（汪汪优选智能客服）"],
-            ["文档类型", "小组上交技术文档"],
-            ["覆盖范围", "第一章：大模型接入与提示词工程；第三、四章：知识库与 RAG"],
+            ["文档类型", "技术说明"],
+            ["覆盖范围", "大模型接入与提示词；知识库与检索增强"],
             ["技术栈", "FastAPI · LangChain · MySQL · Milvus · bge-m3 / bge-reranker"],
-            ["完成形式", "三人小组：入库与聊天页前端 / 检索 / 接入与 Prompt"],
             ["日期", "2026 年 9 月"],
         ],
         col_widths=[4.2, 11.8],
-    )
-
-    add_p(doc, "小组成员（上交前填写）", size=12, bold=True, align="center", space_after=10, first_line=False)
-    add_table(
-        doc,
-        ["角色", "姓名", "学号", "主要职责"],
-        [
-            ["成员甲", "", "", "知识库加载、切块、双写；聊天页前端"],
-            ["成员乙", "", "", "混合检索、RRF 融合、精排与评估"],
-            ["成员丙", "", "", "大模型接入、提示词工程、RAG 对话接入"],
-        ],
-        col_widths=[3.0, 3.2, 3.2, 6.6],
     )
 
     doc.add_page_break()
@@ -183,7 +170,7 @@ def main():
     heading(doc, "1.1 项目背景", 2)
     body(doc, "电商客服场景中，用户大量咨询集中在运费、退换货、时效和商品说明等政策类问题。仅依赖大模型参数记忆，容易出现过期政策、编造条款和无法追溯来源等问题。本系统在接入大模型完成流式对话与结构化提取的基础上，引入检索增强生成（Retrieval-Augmented Generation, RAG）：将平台政策与手册沉淀为可检索知识库，使回答建立在可引用证据之上；证据不足时明确拒答并引导人工，而不是生成无法核验的内容。")
     heading(doc, "1.2 文档范围", 2)
-    body(doc, "本文档对应系统实现中的第一章与第三、四章，说明大模型接入方式、提示词组织方法，以及知识库构建、混合检索与精排管线。订单查询、退款子流程等工具调用能力不在本次上交范围内，仅在文末作边界说明。")
+    body(doc, "这份说明写模型怎么接入、提示词怎么组织，以及知识库、混合检索和精排。订单查询、退款这些工具调用放在文末做边界说明。")
     heading(doc, "1.3 建设目标", 2)
     bullet(doc, "完成聊天模型、嵌入模型、重排模型三组上游的直连接入，配置与代码解耦。")
     bullet(doc, "采用对话式提示词模板，支持多轮上下文、角色约束与结构化输出。")
@@ -259,29 +246,27 @@ def main():
     heading(doc, "5.2 强制检索与拒答", 2)
     body(doc, "知识类问题在图编排节点 retrieve_knowledge 中强制走检索，不把“是否查库”交给模型自由决定。检索后计算证据置信度，并可用自评模板判断证据是否足以回答。低于阈值则返回固定拒答，并提示联系人工；通过则生成带编号的 citations，前端将答案中的 [n] 渲染为可点击来源浮层。该机制用于降低政策幻觉。")
 
-    heading(doc, "6 成员分工", 1)
-    body(doc, "三人按知识流水线划分职责：成员甲负责把文档变成可检索的知识块，并实现用户直接使用的聊天页前端；成员乙负责把用户问题变成排序后的命中列表；成员丙负责大模型接入、提示词以及把命中列表变成可引用的回答（后端接口与生成控制）。分工与源码模块一一对应，便于实现、讲解与验收。")
+    heading(doc, "6 模块怎么拆", 1)
+    body(doc, "整条链路按数据往下走：文档先变成可检索的知识块，再排成命中列表，最后由模型和提示词写成带引用的回答。聊天页只负责把接口里的事件画出来。")
 
-    heading(doc, "6.1 分工总表", 2)
+    heading(doc, "6.1 模块对照", 2)
     add_table(
         doc,
-        ["成员", "对应章节", "负责模块", "主要源码", "交付与讲解要点"],
+        ["模块", "做什么", "主要源码", "怎么看效果"],
         [
-            ["甲", "第三章 + 聊天页前端", "文档加载、切块、双写；聊天页 UI", "app/kb/chunking.py\napp/kb/documents.py\napp/kb/dualwrite.py\napp/static/index.html", "说明切块与双写；讲解聊天页流式渲染、引用角标与来源浮层"],
-            ["乙", "第四章", "四策略检索、RRF 融合、精排、评估", "app/core/retrieval.py\napp/kb/milvus_client.py\napp/core/embeddings.py\napp/core/rerank.py", "说明 dense+BM25 混合检索与 RRF；对比四策略；说明 Top-50/Top-10 与评估复用同一函数"],
-            ["丙", "第一章及 RAG 接入", "模型客户端、提示词、强制检索与对话接口", "app/core/llm.py\napp/core/prompts.py\napp/graph/nodes.py\napp/api/chat.py", "说明直连接入与 ChatPromptTemplate；说明 SSE 接口与拒答策略"],
+            ["知识库与聊天页", "文档加载、切块、双写；聊天页 UI", "app/kb/chunking.py\napp/kb/documents.py\napp/kb/dualwrite.py\napp/static/index.html", "切块可预览、双写条数一致；聊天页流式出字、引用角标能点开"],
+            ["检索", "四策略检索、RRF 融合、精排、评估", "app/core/retrieval.py\napp/kb/milvus_client.py\napp/core/embeddings.py\napp/core/rerank.py", "同一查询可切换 vector、bm25、hybrid、hybrid_rerank"],
+            ["模型与提示词", "模型客户端、提示词、强制检索与对话接口", "app/core/llm.py\napp/core/prompts.py\napp/graph/nodes.py\napp/api/chat.py", "政策问答带编号引用；知识库外问题拒答"],
         ],
-        col_widths=[2.0, 2.4, 3.4, 4.0, 4.2],
+        col_widths=[2.4, 3.4, 4.6, 5.6],
     )
 
-    heading(doc, "6.2 成员甲：知识库构建与聊天页前端", 2)
-    body(doc, "成员甲负责知识从文件到数据库的入库链路，并实现用户使用的聊天页前端。后端工作包括维护知识源清单、实现切块算法、完成 MySQL 与 Milvus 双写。前端工作集中在 app/static/index.html：消息气泡与多轮对话界面、读取 POST /api/chat 的 SSE 流并逐字渲染 delta、将回答中的 [n] 装饰为可点击引用角标并弹出 section_path 与原文、以及满意度反馈按钮。聊天页不实现检索与生成逻辑，只消费丙提供的接口事件（delta、citations、done）。验收标准为：切块可预览、双写条数一致；聊天页能流式出字、点开引用浮层、新开会话互不串扰。")
-    heading(doc, "6.3 成员乙：混合检索与精排", 2)
-    body(doc, "成员乙负责在线检索质量。工作内容包括实现四策略编排、配置 Milvus 稠密/稀疏索引与 hybrid_search、接入 rerank 服务，以及基于同一 search_knowledge 入口完成策略对比评估。知识库页的检索自测与 RAG 评估页由乙配合演示。验收标准为：同一查询可切换 vector、bm25、hybrid、hybrid_rerank；混合加精排整体排序优于单路；评估报告能够说明 Recall / MRR 等指标。")
-    heading(doc, "6.4 成员丙：模型接入与提示词", 2)
-    body(doc, "成员丙负责把模型能力接到对话接口中。工作内容包括 ChatOpenAI 客户端与三组上游配置、全部 ChatPromptTemplate 设计、Query 改写与证据自评、POST /api/chat 的 SSE 事件协议，以及强制检索节点与拒答策略。聊天页的界面实现由甲完成，丙保证接口稳定输出 delta 与 citations。验收标准为：提取接口输出结构化字段；政策问答在接口层带出编号引用；知识库外问题返回拒答而不编造。")
-    heading(doc, "6.5 协作关系", 2)
-    body(doc, "甲的切块质量直接影响乙的召回上限；乙的命中列表是丙生成与拒答的唯一证据来源；丙把 citations 通过 SSE 交给甲的聊天页展示。三人不重复实现同一模块：切块参数与聊天 UI 以甲为准，融合与 k 值以乙为准，提示词、拒答话术与对话接口以丙为准。")
+    heading(doc, "6.2 知识库与聊天页", 2)
+    body(doc, "入库侧维护知识源清单、切块，并把同一批块写入 MySQL 和 Milvus。聊天页在 app/static/index.html：消息气泡、读取 POST /api/chat 的 SSE 流并逐字渲染 delta、把回答里的 [n] 做成可点击引用，以及满意度按钮。页面本身不做检索和生成，只消费 delta、citations、done。")
+    heading(doc, "6.3 混合检索与精排", 2)
+    body(doc, "在线检索支持四种策略，Milvus 侧配置稠密和稀疏索引，hybrid_search 之后接精排。评估和线上共用 search_knowledge。知识库页可以自测检索，评估页对比各策略的 Recall 和 MRR。")
+    heading(doc, "6.4 模型接入与提示词", 2)
+    body(doc, "模型客户端按场景分了三组上游。提示词集中在 ChatPromptTemplate，包括问题改写和证据是否够用的判断。对话接口用 SSE 往外推事件。知识类问题先强制检索，证据不够就拒答，不让模型凭空编政策。")
 
     heading(doc, "7 关键实现对照", 1)
     add_table(
@@ -307,10 +292,10 @@ def main():
     bullet(doc, "评估页展示四策略对比结果，说明评测调用的即线上检索函数。")
 
     heading(doc, "9 总结", 1)
-    body(doc, "本系统将大模型接入与 RAG 管线结合，形成可演示、可追溯的电商客服知识问答能力。接入层以直连方式和 ChatPromptTemplate 完成流式对话与结构化提取；知识层以可控的 Markdown 切块和双写保证原文权威性；检索层以稠密向量与关键词多路融合并经精排提高命中质量；生成层以强制检索和拒答降低幻觉；交互层由聊天页消费 SSE 并展示引用。三人分工覆盖入库与聊天前端、检索、接入与提示词，职责与代码模块对齐，便于独立实现与联合验收。")
+    body(doc, "本系统将大模型接入与 RAG 管线结合，形成可演示、可追溯的电商客服知识问答能力。接入层以直连方式和 ChatPromptTemplate 完成流式对话与结构化提取；知识层以可控的 Markdown 切块和双写保证原文权威性；检索层以稠密向量与关键词多路融合并经精排提高命中质量；生成层以强制检索和拒答降低幻觉；交互层由聊天页消费 SSE 并展示引用。入库、检索、提示词和聊天页按这条链路接在一起，回答可以回溯到原文。")
 
     heading(doc, "附录 范围说明", 1)
-    body(doc, "系统完整实现中还包含订单与物流等工具调用能力。本次上交文档聚焦大模型接入、提示词工程与 RAG，不将工具编排作为考核与讲解重点。政策类问题的主路径是强制检索知识库，而不是由模型自行决定是否调用查询工具。")
+    body(doc, "系统里还有订单、物流这类工具调用。这份说明主要写模型接入、提示词和检索增强。政策类问题的主路径是先查知识库，而不是让模型自己决定要不要查。")
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
     doc.save(OUT)

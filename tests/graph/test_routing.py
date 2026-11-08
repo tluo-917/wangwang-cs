@@ -83,7 +83,7 @@ def test_should_continue_stops_on_step_cap():
 
 
 def test_token_花销不再当停止条件():
-    # 环里只按步数封顶。token 记账继续走(进 trace、给 ch09 统计),但不参与判断:
+    # 环里只按步数封顶。token 记账继续走(进 trace、给 统计),但不参与判断:
     # 混在这里卡,阈值估偏一次就把整条工具链掐断,而且掐在模型已经决定调工具之后
     ai = AIMessage("", tool_calls=[{"name": "query_order", "args": {}, "id": "1"}])
     state = {"messages": [ai], "steps": 1, "tokens_used": 10_000_000}

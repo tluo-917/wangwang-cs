@@ -1,4 +1,4 @@
-"""ch09 飞轮核心:标准化+查重一次输出;命中累加不新建、不复活;幻觉 id 跳过;串行防同批重复。"""
+"""飞轮核心:标准化+查重一次输出;命中累加不新建、不复活;幻觉 id 跳过;串行防同批重复。"""
 from app.core import flywheel
 from app.core.flywheel import NormalizeResult
 from app.db import repository

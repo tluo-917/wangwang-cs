@@ -1,4 +1,4 @@
-"""ch04 编造个案台账:一题一行、复发退回未解决、分页、角标原文如实带出、处置状态流转。"""
+"""编造个案台账:一题一行、复发退回未解决、分页、角标原文如实带出、处置状态流转。"""
 import pytest
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
@@ -102,7 +102,7 @@ async def test_处置必须写说明(client):
         r = await client.post(f"/api/rag-eval/faith-cases/{cid}/status", json={"status": st})
         assert r.status_code == 400
         blank = await client.post(f"/api/rag-eval/faith-cases/{cid}/status",
-                                  json={"status": st, "resolution": "   "})
+                                  json={"status": st, "resolution": " "})
         assert blank.status_code == 400          # 空白也不算交代
     item = (await client.get("/api/rag-eval/faith-cases")).json()["items"][0]
     assert item["status"] == "未解决"             # 挡住了就别把状态改脏

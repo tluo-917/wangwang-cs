@@ -1,4 +1,4 @@
-"""ch10 推理纯函数:阈值应用与空标签兜底。evaluate 与 serve 共用,行为不许分叉。
+"""推理纯函数:阈值应用与空标签兜底。evaluate 与 serve 共用,行为不许分叉。
 轻依赖(仅 numpy),serve 的 ONNX 轻运行时可安全 import。"""
 import numpy as np
 

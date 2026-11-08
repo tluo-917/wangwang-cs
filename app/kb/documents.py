@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from app.kb import chunking
 
 _KEY_TERMS = ("退款", "退货", "时效", "运费", "邮费", "费用", "保修", "赔偿", "期限", "包邮")
-# ch09 起跨模块复用(confidence 关键条款信号 / review 写回打标),导出公共名
+# 起跨模块复用(confidence 关键条款信号 / review 写回打标),导出公共名
 KEY_TERMS = _KEY_TERMS
 
 
@@ -22,7 +22,7 @@ def _is_key(title: str, body: str) -> int:
     return int(any(t in head for t in _KEY_TERMS))
 
 
-is_key = _is_key   # ch09 起跨模块复用(审核写回打关键条款标),导出公共名
+is_key = _is_key   # 起跨模块复用(审核写回打关键条款标),导出公共名
 
 
 def build_chunks(

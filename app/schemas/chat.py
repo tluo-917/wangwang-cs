@@ -15,7 +15,7 @@ class ChatRequest(BaseModel):
     @classmethod
     def _within_input_budget(cls, v: str) -> str:
         """单轮输入不超过 X。上下文预算按每轮最坏 X+Y 留,放进来一条超长的就把
-        这笔账冲掉了;更实际的是超长输入本身会把窗口顶爆,上游直接报错。"""
+ 这笔账冲掉了;更实际的是超长输入本身会把窗口顶爆,上游直接报错。"""
         limit = settings.max_user_input_tokens
         if memory.count_tokens([("human", v)]) > limit:
             raise ValueError(

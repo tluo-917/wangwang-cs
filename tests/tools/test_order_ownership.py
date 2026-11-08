@@ -70,7 +70,7 @@ async def test_身份缺失时读写都拒(bad):
 
 
 def test_演示单每个账号都有():
-    # 文档和验收脚本里到处写着 1001,让它对谁都成立,例子才拿来即跑;
+    # 文档和脚本里到处写着 1001,让它对谁都成立,例子才拿来即跑;
     # 归属校验要看的是私有单那部分
     for uid in (USER, OTHER, "u-随便一个人"):
         for demo in business.DEMO_ORDER_IDS:

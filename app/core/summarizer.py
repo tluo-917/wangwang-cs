@@ -1,4 +1,4 @@
-"""ch07 后台分段摘要:轮结束后按层 2 用量触发,asyncio 后台跑,不阻塞当轮回复。
+"""后台分段摘要:轮结束后按层 2 用量触发,asyncio 后台跑,不阻塞当轮回复。
 
 一次压一批,产出**新的一段**追加进 conversation_summaries,已有段落不回炉重压。
 注入时带最近几段——再老的梗概对当前问题基本没用。
@@ -27,9 +27,9 @@ class _Summary(BaseModel):
 async def summarize_dialog(old_summary: str, dialog: str) -> str:
     """把这一批对话压成一段。严格 JSON(structured output)。
 
-    old_summary 只作为背景给模型看,不参与重写:产出的是**新的一段**,已有段落不回炉。
-    这样订单号这类事实只被压一次,不会因为反复压缩被磨掉。提示词那边也得跟着写死
-    「不要复述、不要合并」,不然模型会把旧梗概重写一遍,存是分段存了,内容照样在累积损失。"""
+ old_summary 只作为背景给模型看,不参与重写:产出的是**新的一段**,已有段落不回炉。
+ 这样订单号这类事实只被压一次,不会因为反复压缩被磨掉。提示词那边也得跟着写死
+ 「不要复述、不要合并」,不然模型会把旧梗概重写一遍,存是分段存了,内容照样在累积损失。"""
     model = llm.structured(_Summary, slot="summary")
     r: _Summary = await (SUMMARY_PROMPT | model).ainvoke(
         {"old_summary": old_summary or "(无)", "dialog": dialog})
@@ -69,12 +69,12 @@ async def run_summary(conversation_id: int) -> None:
 async def _should_summarize(conversation_id: int, conv) -> bool:
     """要不要压一段:层 2 超预算就压,只有这一条判据。
 
-    层 2 装的就是「降级下来、还没压」的那批,它超了预算才轮到摘要出手。以前还并着
-    一条「新增满 N 条就压」的定时器,那是双层时代的规则,留到三层里会坏事:层 2 刚
-    装进东西就被它清空,中间层等于白设。压缩是成本不是美德,装得下就别压。
+ 层 2 装的就是「降级下来、还没压」的那批,它超了预算才轮到摘要出手。以前还并着
+ 一条「新增满 N 条就压」的定时器,那是双层时代的规则,留到三层里会坏事:层 2 刚
+ 装进东西就被它清空,中间层等于白设。压缩是成本不是美德,装得下就别压。
 
-    判据看用量不数条数。工具结果压根不落 messages 表,数条数看不见它涨,而工具越
-    密集的会话恰恰涨得最快。"""
+ 判据看用量不数条数。工具结果压根不落 messages 表,数条数看不见它涨,而工具越
+ 密集的会话恰恰涨得最快。"""
     upto = conv.summary_upto_msg_id or 0
     layer1_from = conv.layer1_from_msg_id or 0
     if layer1_from <= upto:                      # 层 2 是空的,没有可压的
@@ -92,7 +92,7 @@ async def _should_summarize(conversation_id: int, conv) -> bool:
 
 async def maybe_schedule_summary(conversation_id: int) -> None:
     """轮结束后调用:新增消息数达阈值且无在跑任务 → create_task 后台跑,不 await(不阻塞回复)。
-    本函数在用户回复路径上,任何异常只 log 不外抛(触发条件仍在,下一轮重来)。"""
+ 本函数在用户回复路径上,任何异常只 log 不外抛(触发条件仍在,下一轮重来)。"""
     try:
         if conversation_id in _running:
             return

@@ -86,11 +86,11 @@ def test_next_layer1_from_returns_zero_when_budget_is_ample():
 def test_层2压缩必须保住tool_calls():
     """压的是正文,不是这一轮的调用结构。
 
-    AIMessage 带着 tool_calls,后面那条 ToolMessage 拿 tool_call_id 指着它。渲染层 2 时
-    新建 AIMessage 漏掉 tool_calls,这对引用就断了,上游直接回 400
-    「tool result's tool id not found」,整轮回复挂掉。
-    单测里造消息很容易只写 content,这条洞因此能一直藏着,直到层 2 真被接进请求路径。
-    """
+ AIMessage 带着 tool_calls,后面那条 ToolMessage 拿 tool_call_id 指着它。渲染层 2 时
+ 新建 AIMessage 漏掉 tool_calls,这对引用就断了,上游直接回 400
+ 「tool result's tool id not found」,整轮回复挂掉。
+ 单测里造消息很容易只写 content,这条洞因此能一直藏着,直到层 2 真被接进请求路径。
+ """
     from langchain_core.messages import AIMessage, ToolMessage
     call = {"name": "query_order", "args": {"order_id": "1001"}, "id": "call_abc", "type": "tool_call"}
     msgs = [AIMessage("我来帮您查一下订单" * 20, id="a1", tool_calls=[call]),

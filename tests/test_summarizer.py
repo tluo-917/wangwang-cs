@@ -1,4 +1,4 @@
-"""ch07 后台摘要:触发判据 / 边界 / 防抖 / 任务体(LLM 用假实现,不打真上游)。"""
+"""后台摘要:触发判据 / 边界 / 防抖 / 任务体(LLM 用假实现,不打真上游)。"""
 import asyncio
 from types import SimpleNamespace
 
@@ -22,7 +22,7 @@ def _dialog_rows(n_turns, start_id=1):
 def _small_budget(monkeypatch, sliding: int) -> None:
     """把滑窗预算打小,好让层 2 在几条消息内就超预算。
 
-    只用到 .sliding 一个字段,拿个轻量对象顶上就够,不必真去算一遍预算。"""
+ 只用到 .sliding 一个字段,拿个轻量对象顶上就够,不必真去算一遍预算。"""
     monkeypatch.setattr(summarizer.budget, "compute",
                         lambda *a, **k: SimpleNamespace(sliding=sliding))
 
@@ -40,10 +40,10 @@ async def _fake_llm(old_summary, dialog):
 async def test_摘要边界就是层1起点(db_session_factory, db_clean, monkeypatch):
     """摘要吃的就是层 2,不另算一套边界。
 
-    以前这里按轮数算边界(留最近 K 轮、更早的压掉),那是双层时代的规则。改成从窗口
-    倒推之后两者脱节:按轮数那条每次都伸得更远,一口把还在层 1 的内容吞掉,层 2 于是
-    永远是空的。讲的是三层,跑起来只有两层,而且从外面一点看不出来。
-    """
+ 以前这里按轮数算边界(留最近 K 轮、更早的压掉),那是双层时代的规则。改成从窗口
+ 倒推之后两者脱节:按轮数那条每次都伸得更远,一口把还在层 1 的内容吞掉,层 2 于是
+ 永远是空的。讲的是三层,跑起来只有两层,而且从外面一点看不出来。
+ """
     cid = await repo.create_conversation("u1")
     await _seed(cid)
     monkeypatch.setattr(summarizer, "summarize_dialog", _fake_llm)
@@ -115,9 +115,9 @@ async def test_层2超预算才压(db_session_factory, db_clean, monkeypatch):
 async def test_不再按条数定时压(db_session_factory, db_clean, monkeypatch):
     """双层时代那条「新增满 N 条就压」的定时器已经删掉,别有人顺手加回来。
 
-    它留在三层里会坏事:层 2 刚被降级填进东西就被它清空,中间层等于白设。
-    这里堆足够多的消息,只要层 2 是空的,就一条都不该压。
-    """
+ 它留在三层里会坏事:层 2 刚被降级填进东西就被它清空,中间层等于白设。
+ 这里堆足够多的消息,只要层 2 是空的,就一条都不该压。
+ """
     cid = await repo.create_conversation("u1")
     await _seed(cid, n_turns=60)                   # 120 条,远超当年那个 30 的阈值
     _small_budget(monkeypatch, sliding=20)

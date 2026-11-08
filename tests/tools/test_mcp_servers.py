@@ -1,5 +1,5 @@
-"""ch08 MCP Server 集成测试:真起子进程 → adapters client 列工具 + 真调。
-连不上视为环境问题直接 fail(两台 Server 是本章交付物,不 skip)。"""
+"""MCP Server 集成测试:真起子进程 → adapters client 列工具 + 真调。
+连不上视为环境问题直接 fail(两台 Server 是交付物,不 skip)。"""
 import os
 import pathlib
 import socket
@@ -60,7 +60,7 @@ async def test_list_tools_three_essentials(mcp_procs):
 
 def _text_of(result) -> str:
     """adapters 返回内容块列表 [{"type":"text","text":...,"id":lc_随机}],块 id 每次不同,
-    比稳定性只看文本载荷。"""
+ 比稳定性只看文本载荷。"""
     if isinstance(result, list):
         return "\n".join(b.get("text", "") for b in result if isinstance(b, dict))
     return str(result)

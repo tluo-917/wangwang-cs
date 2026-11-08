@@ -35,8 +35,8 @@ FC_TRANSIENT_ERR = TimeoutError("上游超时")            # 瞬时故障,跟通
 class _FakeModel:
     """function calling 那路可以配置成返回 None 或抛指定异常。
 
-    method 一律记进 calls["methods"],好断言没人偷偷再挂一条 json_mode 通路上来。
-    """
+ method 一律记进 calls["methods"],好断言没人偷偷再挂一条 json_mode 通路上来。
+ """
 
     def __init__(self, fc, calls: dict):
         self.fc, self.calls = fc, calls
@@ -149,10 +149,10 @@ def test_默认温度不变_显式传0才是0():
 def test_flagged_family_forces_non_streaming(monkeypatch):
     """_NO_STREAM_TOOLCALL_FAMILIES 里的模型族流式下不吐 tool_calls,必须给它关掉流式。
 
-    两类上游毛病相反:中转的非流式兼容层会把 arguments 拼坏(所以默认开流式),
-    这几个族反过来。这条防止有人把默认值改回去时静默退化,退化的表现是
-    function calling 连着两次拿不到 tool_calls,整条链当场抛异常。
-    """
+ 两类上游毛病相反:中转的非流式兼容层会把 arguments 拼坏(所以默认开流式),
+ 这几个族反过来。这条防止有人把默认值改回去时静默退化,退化的表现是
+ function calling 连着两次拿不到 tool_calls,整条链当场抛异常。
+ """
     seen = {}
 
     def fake_get_chat_model(streaming=False, model=None, temperature=None, slot="chat"):
@@ -197,9 +197,9 @@ def flaky(monkeypatch):
 async def test_偶发拿不到_tool_calls_重试一次就该成(flaky):
     """一次抖动不许把整条链打崩。
 
-    偶发不返回是真会发生的:同一 prompt 连着调有时给有时不给。既然没有降级路了,
-    这一层重试就是唯一的缓冲,不能省。
-    """
+ 偶发不返回是真会发生的:同一 prompt 连着调有时给有时不给。既然没有降级路了,
+ 这一层重试就是唯一的缓冲,不能省。
+ """
     calls = flaky(misses=1)
     r = await llm.structured(_Check, model="flaky-model").ainvoke("证据够不够")
     assert r.reason == "function_calling"
@@ -209,9 +209,9 @@ async def test_偶发拿不到_tool_calls_重试一次就该成(flaky):
 async def test_失败不留跨调用状态_下一次照样从头试(flaky):
     """曾经的 sticky 机制会把连续失败的模型永久钉在降级路上,而且只加不减、进程重启才恢复。
 
-    偶发不返回加上 json_mode 会炸,两件事凑一起,三次抖动就能让整个进程再也答不出
-    结构化结果。现在不留这种记忆:每次调用都是干净的两次机会。
-    """
+ 偶发不返回加上 json_mode 会炸,两件事凑一起,三次抖动就能让整个进程再也答不出
+ 结构化结果。现在不留这种记忆:每次调用都是干净的两次机会。
+ """
     calls = flaky(misses=2)                         # 前两次不给,第三次开始给
     with pytest.raises(OutputParserException):
         await llm.structured(_Check, model="dead-model").ainvoke("x")

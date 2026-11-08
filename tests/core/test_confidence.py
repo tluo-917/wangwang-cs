@@ -1,4 +1,4 @@
-"""ch09 置信度闸:四信号(Top1 分/有效证据数/分差/关键条款)加权,纯函数可复现。"""
+"""置信度闸:四信号(Top1 分/有效证据数/分差/关键条款)加权,纯函数可复现。"""
 import pytest
 
 from app.core.confidence import EvidenceConfidence, compute_evidence_confidence, snapshot_from_hits

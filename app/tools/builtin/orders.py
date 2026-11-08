@@ -18,8 +18,8 @@ async def query_order(
     user_id: Annotated[str, InjectedToolArg],
 ) -> dict:
     """查询订单的状态、金额、下单时间、商品名和物流单号(tracking_no)。用于用户询问某个订单情况时。
-    要查物流轨迹,需先用本工具拿到订单的 tracking_no,再把它传给 query_logistics。
-    发起人身份由系统注入,你不要传 user_id。"""
+ 要查物流轨迹,需先用本工具拿到订单的 tracking_no,再把它传给 query_logistics。
+ 发起人身份由系统注入,你不要传 user_id。"""
     if not owns_order(user_id, order_id):
         return dict(NOT_OWNED)
     return order_snapshot(order_id)

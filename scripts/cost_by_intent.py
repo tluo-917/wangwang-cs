@@ -1,4 +1,4 @@
-"""ch09 Cost Control:按意图统计 token 花销(README:「按意图把 token 分堆一算,
+"""Cost Control:按意图统计 token 花销(README:「按意图把 token 分堆一算,
 哪类意图最烧钱立马现形」)。数据源 = Langfuse Metrics API(意图在 classify_intent 打成 intent:xxx tag)。
 运行:make cost-report(DAYS=N 窗口天数,默认 7;需 Langfuse 在跑且 .env 配好三变量)。
 产物:data/ch09/reports/cost_by_intent.{txt,json};「观测与成本」页只读这份 json,不另算一份。

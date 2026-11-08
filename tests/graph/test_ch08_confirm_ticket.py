@@ -1,4 +1,4 @@
-"""graph 级:建工单确认流(ch08)。业务路由 → main_agent 发 create_ticket → agent_tools 顶置
+"""graph 级:建工单确认流()。业务路由 → main_agent 发 create_ticket → agent_tools 顶置
 interrupt 推预览 → resume confirmed 两分支(true 落库回工单号 / false 权限拒绝审计+不落库);
 参数缺失则不弹卡,走引擎「校验拦下」回灌,模型收敛为追问。"""
 import pytest
@@ -38,7 +38,7 @@ def wired(monkeypatch):
         return q
 
     async def fake_intent(q, h):
-        return {"intent": "人工", "confidence": 0.95}   # ch08 新意图:明确要求建单 → business
+        return {"intent": "人工", "confidence": 0.95}   # 新意图:明确要求建单 → business
 
     monkeypatch.setattr(nodes.coref, "resolve", fake_coref)
     monkeypatch.setattr(nodes.intent_mod, "classify", fake_intent)
@@ -99,7 +99,7 @@ async def test_confirm_false_denied_and_audited(wired):
 
 async def test_missing_description_asks_instead_of_interrupt(wired, monkeypatch):
     """模型第一轮发缺 description 的 create_ticket → 校验拦下回灌(不 interrupt),
-    第二轮模型收敛为追问文本。"""
+ 第二轮模型收敛为追问文本。"""
     class NoDescModel(FakeModel):
         async def ainvoke(self, msgs, config=None):
             self.calls += 1
@@ -148,7 +148,7 @@ async def test_multiple_create_ticket_only_first_confirmed(wired):
 
 async def test_resume_value_mismatch_treated_as_cancel(wired):
     """resume 值形状守卫:confirm_ticket 挂起时误传 order_id 字符串(两种中断共用一个端点),
-    按未确认处理——不建单、不炸节点。"""
+ 按未确认处理——不建单、不炸节点。"""
     created, audits = wired
     g = build_graph(checkpointer=InMemorySaver())
     cfg = {"configurable": {"thread_id": "t5"}}

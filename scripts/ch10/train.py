@@ -1,4 +1,4 @@
-"""ch10 训练:RoBERTa-wwm-ext 全参微调,17 类多标签(BCEWithLogitsLoss)。
+"""训练:RoBERTa-wwm-ext 全参微调,17 类多标签(BCEWithLogitsLoss)。
 运行:make ch10-train。设备自适应 cuda→mps→cpu(Trainer 自动挑);正则化 weight_decay + 早停盯验证集 micro-F1。
 HF 下载不通时:HF_ENDPOINT=https://hf-mirror.com make ch10-train。"""
 import json
@@ -45,8 +45,8 @@ def compute_metrics(eval_pred):
 
 class BestInMemory(TrainerCallback):
     """最优权重快照进内存,全程零磁盘 checkpoint。
-    本机磁盘只剩几百 MB:Trainer 的 save/rotate 峰值要 2-3 份权重(实测两次撞满盘),
-    改为 on_evaluate 时把更优的 state_dict 复制到 CPU 内存,训练完回填、只落一次盘。"""
+ 本机磁盘只剩几百 MB:Trainer 的 save/rotate 峰值要 2-3 份权重(实测两次撞满盘),
+ 改为 on_evaluate 时把更优的 state_dict 复制到 CPU 内存,训练完回填、只落一次盘。"""
 
     def __init__(self, model):
         self.model = model

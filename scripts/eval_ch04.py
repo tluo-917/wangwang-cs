@@ -1,15 +1,15 @@
 """四策略(vector/bm25/hybrid/hybrid_rerank)分桶评估。需 Milvus Standalone + 已建库 + 上游可调通。
 
 三段指标:
-  1) 检索段(确定性):四策略 × 各桶 Recall@5 / MRR(按 expect_section 命中 section_path)。
-     召回率按前五截断(RECALL_K),检索深度仍是 Top-10(K),两者分开配。
-     跨文档题(E_multi)用 expect_sections_all 写「必须都命中」的几组证据:
-     Recall 按组给部分分(凑齐才 1.00),MRR 按每块证据各自名次的倒数取平均、漏的记 0。
-  2) 证据覆盖度(确定性·跨策略):四策略召回的 Top-K 证据里,盖住了几个标准答案要点(expect_points 机械匹配)。
-  3) 生成段(glm):
-     - 四策略各自生成答案 → LLM 判「答案覆盖度」(端到端证明:检索越好→答案越全);
-     - hybrid_rerank 额外算 Faithfulness(答案不编造);
-     - D 桶经线上管线看拒答率。
+ 1) 检索段(确定性):四策略 × 各桶 Recall@5 / MRR(按 expect_section 命中 section_path)。
+ 召回率按前五截断(RECALL_K),检索深度仍是 Top-10(K),两者分开配。
+ 跨文档题(E_multi)用 expect_sections_all 写「必须都命中」的几组证据:
+ Recall 按组给部分分(凑齐才 1.00),MRR 按每块证据各自名次的倒数取平均、漏的记 0。
+ 2) 证据覆盖度(确定性·跨策略):四策略召回的 Top-K 证据里,盖住了几个标准答案要点(expect_points 机械匹配)。
+ 3) 生成段(glm):
+ - 四策略各自生成答案 → LLM 判「答案覆盖度」(端到端证明:检索越好→答案越全);
+ - hybrid_rerank 额外算 Faithfulness(答案不编造);
+ - D 桶经线上管线看拒答率。
 生成段带每调用超时 + 失败跳过 + 低并发,单点故障不拖垮整轮;检索段/证据覆盖度不依赖 glm、可复现。
 
 加 --skip-gen 只跑前两段(确定性、不碰裁判模型):裁判上游挂了或只想快速看检索侧时用,
@@ -107,7 +107,7 @@ def _hit_rank(hits, expect_section):
 
 def _groups(sample) -> list[list[str]]:
     """统一成「必须都命中」的组列表:跨文档题一问要好几块知识,写在
-    expect_sections_all 里(组内是别名、任一命中即可);单证据题就是一个组。"""
+ expect_sections_all 里(组内是别名、任一命中即可);单证据题就是一个组。"""
     groups = sample.get("expect_sections_all")
     if groups:
         return [g if isinstance(g, list) else [g] for g in groups]
@@ -120,14 +120,14 @@ def _ranks_per_group(hits, sample) -> list[int]:
 
 def _recall_at(ranks: list[int], k: int) -> float:
     """Recall@k:这题需要的几块证据,有几成在前 k 条里。
-    单证据题就是老口径(0 或 1);跨文档题按组给部分分,凑齐才是 1.00。"""
+ 单证据题就是老口径(0 或 1);跨文档题按组给部分分,凑齐才是 1.00。"""
     return _mean([1.0 if 0 < r <= k else 0.0 for r in ranks])
 
 
 def _rr(ranks: list[int]) -> float:
     """MRR:单证据题就是命中名次的倒数;跨文档题按「每块证据各自的名次倒数」取平均,
-    漏掉的那块记 0。不用「最后一块到位」的名次算,那样两块证据的题上限只有 0.5,
-    和单证据桶放进同一张图会被误读成检索变差了。"""
+ 漏掉的那块记 0。不用「最后一块到位」的名次算,那样两块证据的题上限只有 0.5,
+ 和单证据桶放进同一张图会被误读成检索变差了。"""
     return _mean([(1.0 / r if r else 0.0) for r in ranks])
 
 
@@ -155,9 +155,9 @@ def _format_evidence(hits) -> str:
 async def _try(factory, label):
     """带超时地跑一个 glm 协程;失败退避一次再试,仍失败返回 None 并记账(不拖垮整轮)。
 
-    factory 是「造协程的函数」而不是协程本身:协程只能 await 一次,要重试就得重新造一个。
-    偶发 429 / 超时直接记成 None 的话,一个桶可能一条样本都不剩,分数就成了 0.00——
-    那是「没评上」不是「真的零分」,所以先退一步重试。"""
+ factory 是「造协程的函数」而不是协程本身:协程只能 await 一次,要重试就得重新造一个。
+ 偶发 429 / 超时直接记成 None 的话,一个桶可能一条样本都不剩,分数就成了 0.00——
+ 那是「没评上」不是「真的零分」,所以先退一步重试。"""
     for i in range(2):
         try:
             return await asyncio.wait_for(factory(), CALL_TIMEOUT)
@@ -290,10 +290,10 @@ async def _gen_one(strat, s, HITS, model, cov_judge, faith_judge,
 async def _ledger(cases) -> None:
     """把这一轮的编造个案写进台账(faith_cases)。
 
-    报告一重跑就被覆盖,个案和它的处置状态得有地方长期待着——同一道题跨轮反复被判编造,
-    才看得出库里那一格一直没补对。写库失败不影响这一轮的报告:台账是附加的管理视图,
-    不能让它把评估结果拖没了(比如没应用 sql/ch04-ddl.sql 的环境)。
-    """
+ 报告一重跑就被覆盖,个案和它的处置状态得有地方长期待着——同一道题跨轮反复被判编造,
+ 才看得出库里那一格一直没补对。写库失败不影响这一轮的报告:台账是附加的管理视图,
+ 不能让它把评估结果拖没了(比如没应用 sql/ch04-ddl.sql 的环境)。
+ """
     if not cases:
         _log("\n-- 编造个案台账:本轮 0 例,无需写入 --")
         return
@@ -317,7 +317,7 @@ async def _ledger(cases) -> None:
 
 async def _refusal_one(s):
     """D 桶一题:走线上管线看该拒有没有拒。没拒住的把证据留下来——
-    只报一个 56/57 的比率,读者没法知道是哪一条漏了、被什么证据骗过去的。"""
+ 只报一个 56/57 的比率,读者没法知道是哪一条漏了、被什么证据骗过去的。"""
     async with _gen_sem:
         out = await _try(lambda: faq.query_faq.ainvoke({"keyword": s["query"]}),
                          f"refuse:{s['id']}")

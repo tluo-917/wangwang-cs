@@ -1,13 +1,13 @@
-"""评估集自检(ch04):300 题手写的 ground truth 靠这个脚本兜住,不靠人眼。
+"""评估集自检():300 题手写的 ground truth 靠这个脚本兜住,不靠人眼。
 
 查五件事:
-  1) id 与 query 不重复,五个桶题数一致;
-  2) 可作答桶的 expect_section 在知识库里至少能命中一个小节(命中 0 个 = 这题永远算漏);
-  3) expect_points 必须逐字(去空白后)出现在目标小节的正文里——证据覆盖度是机械子串匹配,
-     要点写得再对、只要库里不是这么写的,分数就永远上不去;
-     跨文档桶(E_multi)写 expect_sections_all:每一组都必须能命中小节,要点在这几组的并集里查;
-  4) D 桶不能带 ground truth,should_refuse 与桶必须自洽;
-  5) 提示 expect_section 判得过松的题(一个关键词命中一堆小节,recall 会虚高)。
+ 1) id 与 query 不重复,五个桶题数一致;
+ 2) 可作答桶的 expect_section 在知识库里至少能命中一个小节(命中 0 个 = 这题永远算漏);
+ 3) expect_points 必须逐字(去空白后)出现在目标小节的正文里——证据覆盖度是机械子串匹配,
+ 要点写得再对、只要库里不是这么写的,分数就永远上不去;
+ 跨文档桶(E_multi)写 expect_sections_all:每一组都必须能命中小节,要点在这几组的并集里查;
+ 4) D 桶不能带 ground truth,should_refuse 与桶必须自洽;
+ 5) 提示 expect_section 判得过松的题(一个关键词命中一堆小节,recall 会虚高)。
 
 需 Milvus Standalone + 已建库(知识库正文从 Milvus 读,和评估时同一份)。
 运行:make eval-check

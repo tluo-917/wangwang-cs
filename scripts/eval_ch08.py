@@ -1,7 +1,7 @@
-"""ch08 验收样例端到端评估:建工单确认流(追问/预览/确认/取消)+ 物流走 MCP。
+"""样例端到端评估:建工单确认流(追问/预览/确认/取消)+ 物流走 MCP。
 需全服务起:make dev(含两台 MCP Server)+ MySQL + 聊天上游;已应用 sql/ch08-ddl.sql。
 用法:.venv/bin/python -m scripts.eval_ch08
-判据即验收标准:中断有无/工单落表/审计状态/工具轨迹;追问措辞打印出来供人工复核(prompt 类产出)。"""
+判据即标准:中断有无/工单落表/审计状态/工具轨迹;追问措辞打印出来供人工复核(prompt 类产出)。"""
 import asyncio
 import json
 
@@ -45,25 +45,25 @@ async def main():
     results = []
 
     async with httpx.AsyncClient(timeout=180) as c:
-        # ---- 验收4a:明确要建单但没讲清楚问题 → 追问,不弹卡不落单 ----
+        # ---- 4a:明确要建单但没讲清楚问题 → 追问,不弹卡不落单 ----
         tickets_before = await db_scalar(engine, "SELECT COUNT(*) FROM tickets")
         r1 = await agent(c, "帮我建个工单")
         cid = r1["conversation_id"]
         tickets_now = await db_scalar(engine, "SELECT COUNT(*) FROM tickets")
         no_interrupt = r1.get("interrupt") is None
-        results.append(("验收4a 缺问题描述先追问(无预览卡/无落单)",
+        results.append(("检查4a 缺问题描述先追问(无预览卡/无落单)",
                         no_interrupt and tickets_now == tickets_before,
                         f"answer={r1['answer']!r}"))
 
-        # ---- 验收4b:补齐问题描述 → 弹工单预览卡(interrupt confirm_ticket) ----
+        # ---- 4b:补齐问题描述 → 弹工单预览卡(interrupt confirm_ticket) ----
         r2 = await agent(c, "我的智能猫砂盆漏电了,一开机就跳闸", cid)
         intr = r2.get("interrupt") or {}
         ok_preview = intr.get("type") == "confirm_ticket" and bool(
             (intr.get("preview") or {}).get("description"))
-        results.append(("验收4b 补齐后弹工单预览卡(type/preview 齐)", ok_preview,
+        results.append(("检查4b 补齐后弹工单预览卡(type/preview 齐)", ok_preview,
                         f"interrupt={intr}"))
 
-        # ---- 验收4c:确认提交 → tickets 落一条,答复带工单号 ----
+        # ---- 4c:确认提交 → tickets 落一条,答复带工单号 ----
         answer = await resume(c, cid, confirmed=True)
         ticket_no = await db_scalar(
             engine, "SELECT ticket_no FROM tickets ORDER BY created_at DESC, ticket_no DESC LIMIT 1")
@@ -71,12 +71,12 @@ async def main():
         audit_ok = await db_scalar(
             engine, "SELECT status FROM tool_audit_logs WHERE tool_name='create_ticket' "
                     "ORDER BY id DESC LIMIT 1")
-        results.append(("验收4c 确认提交→落 tickets+审计成功+答复带工单号",
+        results.append(("检查4c 确认提交→落 tickets+审计成功+答复带工单号",
                         tickets_after == tickets_before + 1 and audit_ok == "成功"
                         and bool(ticket_no) and ticket_no in answer,
                         f"ticket_no={ticket_no} 审计={audit_ok} answer={answer!r}"))
 
-        # ---- 验收5:走到预览卡后点取消 → 不建单,审计「权限拒绝」 ----
+        # ---- 5:走到预览卡后点取消 → 不建单,审计「权限拒绝」 ----
         r3 = await agent(c, "帮我建个工单,我的猫爬架第三层塌了")
         cid2 = r3["conversation_id"]
         intr3 = r3.get("interrupt") or {}
@@ -87,12 +87,12 @@ async def main():
         audit_deny = await db_scalar(
             engine, "SELECT status FROM tool_audit_logs WHERE tool_name='create_ticket' "
                     "ORDER BY id DESC LIMIT 1")
-        results.append(("验收5 取消→不建单+审计「权限拒绝」",
+        results.append(("检查5 取消→不建单+审计「权限拒绝」",
                         intr3.get("type") == "confirm_ticket"
                         and tickets_final == tickets_after and audit_deny == "权限拒绝",
                         f"interrupt={intr3.get('type')} 审计={audit_deny} answer={answer3!r}"))
 
-        # ---- 验收2:物流轨迹由物流 MCP Server 接管(工具轨迹+审计来源) ----
+        # ---- 2:物流轨迹由物流 MCP Server 接管(工具轨迹+审计来源) ----
         r4 = await agent(c, "订单1001的物流到哪了")
         names = [tc["name"] for tc in r4.get("tool_calls", [])]
         lg = [tr for tr in r4.get("tool_results", []) if tr["name"] == "query_logistics"]
@@ -101,7 +101,7 @@ async def main():
         src = await db_scalar(
             engine, "SELECT CONCAT(tool_source,'/',IFNULL(mcp_server,'')) FROM tool_audit_logs "
                     "WHERE tool_name='query_logistics' ORDER BY id DESC LIMIT 1")
-        results.append(("验收2 物流走 MCP(轨迹含中文状态+审计来源 mcp/logistics)",
+        results.append(("检查2 物流走 MCP(轨迹含中文状态+审计来源 mcp/logistics)",
                         "query_logistics" in names and zh_status and src == "mcp/logistics",
                         f"tools={names} 审计来源={src} answer={r4['answer']!r}"))
 

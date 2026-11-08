@@ -23,8 +23,8 @@ _DDL_FILES = [
     pathlib.Path(__file__).resolve().parent.parent / "sql" / "ch10-ddl.sql",
 ]
 # 删除顺序:先子表后父表;knowledge_chunks 自引用 FK 靠 FOREIGN_KEY_CHECKS=0 兜
-# ch09:low_confidence_questions 有 FK 指向 review_queue,排它前面
-# ch10:topic_classifications 有 FK 指向 low_confidence_questions,必须排它前面先删
+# low_confidence_questions 有 FK 指向 review_queue,排它前面
+# topic_classifications 有 FK 指向 low_confidence_questions,必须排它前面先删
 _TABLES = ["faith_cases", "topic_classifications", "low_confidence_questions", "review_queue", "eval_runs",
            "conversation_summaries",
            "messages", "tickets", "tool_audit_logs", "conversations", "faq",
@@ -36,7 +36,7 @@ _SERVER_URL = _TEST_URL.rsplit("/", 1)[0]
 
 
 def _split_sql(sql: str) -> list[str]:
-    """按分号切语句,但跳过单引号字符串内的分号(ch09 起 COMMENT 文案里出现 ; 和 :)。"""
+    """按分号切语句,但跳过单引号字符串内的分号(起 COMMENT 文案里出现 ; 和 :)。"""
     stmts, buf, in_str = [], [], False
     for ch in sql:
         if ch == "'":
@@ -56,7 +56,7 @@ def _create_table_stmts() -> list[str]:
     for ddl in _DDL_FILES:
         raw = ddl.read_text(encoding="utf-8")
         sql = "\n".join(ln for ln in raw.splitlines() if not ln.lstrip().startswith("--"))
-        # ch07 起有 ALTER TABLE(给既有表加列);文件列表顺序保证先 CREATE 后 ALTER
+        # 起有 ALTER TABLE(给既有表加列);文件列表顺序保证先 CREATE 后 ALTER
         for s in _split_sql(sql):
             s = s.strip()
             if not s:
@@ -71,15 +71,15 @@ def _create_table_stmts() -> list[str]:
 
 @pytest.fixture(autouse=True)
 def _no_langfuse(monkeypatch):
-    """ch09:测试一律关闭 Langfuse——.env 若配了三变量,graph 测试里的 tag_intent
-    会把意图事件真发到本地 Langfuse(0-token 垃圾 trace 污染成本账,实测踩坑)。
-    test_observability 里要开的用例自行 monkeypatch 覆盖,不受影响。"""
+    """测试一律关闭 Langfuse——.env 若配了三变量,graph 测试里的 tag_intent
+ 会把意图事件真发到本地 Langfuse(0-token 垃圾 trace 污染成本账,实测踩坑)。
+ test_observability 里要开的用例自行 monkeypatch 覆盖,不受影响。"""
     monkeypatch.setattr("app.config.settings.langfuse_public_key", "")
 
 
 @pytest_asyncio.fixture()
 async def _test_engine():
-    """function 级:确保测试库存在 + 重建 ch02+ch03 共 6 表。engine 在当前 event loop 创建/销毁,避免跨 loop。"""
+    """function 级:确保测试库存在 + 重建 ch02+共 6 表。engine 在当前 event loop 创建/销毁,避免跨 loop。"""
     admin = create_async_engine(_SERVER_URL, isolation_level="AUTOCOMMIT")
     async with admin.connect() as conn:
         await conn.execute(
@@ -95,7 +95,7 @@ async def _test_engine():
         await conn.execute(text("SET FOREIGN_KEY_CHECKS=1"))
         for stmt in _create_table_stmts():
             # exec_driver_sql:原样执行,不做 :name 绑定参数解析
-            # (ch09 eval_runs 的 COMMENT 里有 JSON 示例 {"recall_at_k":0.82},text() 会把 :0 当参数)
+            # (eval_runs 的 COMMENT 里有 JSON 示例 {"recall_at_k":0.82},text() 会把 :0 当参数)
             await conn.exec_driver_sql(stmt)
     yield engine
     await engine.dispose()
@@ -105,9 +105,9 @@ async def _test_engine():
 async def db_session_factory(_test_engine, monkeypatch):
     """把 app.db.base.async_session 指向测试库,并返回该工厂供测试直接开 session。
 
-    repository 内部通过 app.db.base.async_session(模块属性)访问,故 monkeypatch 生效;
-    测试要自建 session 时用本 fixture 的返回值,勿在测试模块顶层 from-import async_session。
-    """
+ repository 内部通过 app.db.base.async_session(模块属性)访问,故 monkeypatch 生效;
+ 测试要自建 session 时用本 fixture 的返回值,勿在测试模块顶层 from-import async_session。
+ """
     factory = async_sessionmaker(_test_engine, expire_on_commit=False)
     monkeypatch.setattr("app.db.base.async_session", factory)
     return factory

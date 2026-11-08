@@ -33,7 +33,7 @@ def test_resume_endpoint_streams(client, monkeypatch):
 
 
 def test_resume_endpoint_confirmed_branch(client, monkeypatch):
-    """ch08:工单预览卡确认/取消走 confirmed 字段,resume 值为 {"confirmed": bool}。"""
+    """工单预览卡确认/取消走 confirmed 字段,resume 值为 {"confirmed": bool}。"""
     async def fake_stream_resume(cid, resume_value):
         assert cid == 3 and resume_value == {"confirmed": False}
         yield {"type": "delta", "text": "已取消建单"}

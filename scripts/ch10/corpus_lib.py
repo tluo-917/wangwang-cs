@@ -1,4 +1,4 @@
-"""ch10 数据流水线纯函数:脱敏、去重、分层划分。不碰网络与 DB,可单测。"""
+"""数据流水线纯函数:脱敏、去重、分层划分。不碰网络与 DB,可单测。"""
 import random
 import re
 
@@ -11,7 +11,7 @@ _WX_QQ = re.compile(r"(微信|weixin|wx|QQ|qq)[号:: ]*[A-Za-z0-9_-]{5,}\s?")
 
 def desensitize(text: str) -> str:
     """脱敏:手机号 → [手机号],长数字单号 → [单号],微信/QQ 号 → 前缀+[账号]。
-    商品型号(如 MH-LP100,字母开头短串)不匹配上述模式,不受影响。"""
+ 商品型号(如 MH-LP100,字母开头短串)不匹配上述模式,不受影响。"""
     text = _PHONE.sub("[手机号]", text)
     text = _LONG_DIGITS.sub("[单号]", text)
     text = _WX_QQ.sub(lambda m: m.group(1) + "[账号]", text)
@@ -32,7 +32,7 @@ def dedupe(samples: list[dict]) -> list[dict]:
 
 def split_dataset(samples: list[dict], seed: int = 42) -> tuple[list, list, list]:
     """80/10/10 分层划分:按标签组合分层;组合样本 <10 条的并进其 label id 最小
-    标签的单标签层,保证小类目不至于在验证/测试里绝迹。层内 <3 条全给训练集。"""
+ 标签的单标签层,保证小类目不至于在验证/测试里绝迹。层内 <3 条全给训练集。"""
     rng = random.Random(seed)
     combos: dict[tuple, list[dict]] = {}
     for s in samples:

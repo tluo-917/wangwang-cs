@@ -1,8 +1,8 @@
 """流式用量不许被重复累加。
 
 为什么要有这组测试:有些 OpenAI 兼容通道每个 chunk 都重报一遍累计用量,而 langchain-openai
-把各 chunk 相加,一次调用的 token 数被放大到 chunk 条数倍。ch09 的成本账直接读这个数,
-虚高一个量级;判断口径一旦按它做闸,还会误伤(ch05 早先那道预算闸就是这么第一步跳闸的)。
+把各 chunk 相加,一次调用的 token 数被放大到 chunk 条数倍。的成本账直接读这个数,
+虚高一个量级;判断口径一旦按它做闸,还会误伤(早先那道预算闸就是这么第一步跳闸的)。
 不打上游,拿假 chunk 喂转换入口。
 """
 from langchain_core.messages import AIMessageChunk

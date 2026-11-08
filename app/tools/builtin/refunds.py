@@ -15,8 +15,8 @@ async def submit_refund(
     reason: Annotated[str | None, Field(description="退款原因(可选,最终以前端固定类目下拉为准)")] = None,
 ) -> dict:
     """判定这一单可以退款后,调用本工具发起退款申请。实际提交由前端退款表单确认后落库,
-    本工具只表示『这一单可以退,已把提交入口交给用户』。
-    发起人身份由系统注入,你不要传 user_id。"""
+ 本工具只表示『这一单可以退,已把提交入口交给用户』。
+ 发起人身份由系统注入,你不要传 user_id。"""
     # 写操作有二次确认门,但那道门确认的是「要不要退」,不是「这单是不是你的」,归属得单独校验
     if not owns_order(user_id, order_id):
         return dict(NOT_OWNED)

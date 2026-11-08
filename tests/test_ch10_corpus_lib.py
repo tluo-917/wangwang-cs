@@ -1,4 +1,4 @@
-"""ch10 语料纯函数:脱敏 / 去重 / 分层划分。"""
+"""语料纯函数:脱敏 / 去重 / 分层划分。"""
 from scripts.ch10.corpus_lib import dedupe, desensitize, split_dataset
 
 

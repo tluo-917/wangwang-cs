@@ -36,7 +36,7 @@ def _user_text(state) -> str:
 
 def _history_text(state, max_turns: int = 6) -> str:
     """摘要行 + 滑窗内最近若干轮(不含本轮最后一条 human),供 coref/意图读上下文。
-    ch07:先按摘要边界切窗再取尾——跨滑窗的指代(「最开始那个订单」)靠摘要行兜住。"""
+ 先按摘要边界切窗再取尾——跨滑窗的指代(「最开始那个订单」)靠摘要行兜住。"""
     msgs = memory.build_window(state.get("messages", []),
                                state.get("summary_upto_msg_id") or 0,
                                state.get("layer1_from_msg_id") or 0)
@@ -63,11 +63,11 @@ def _extract_order_id(text: str) -> str | None:
 
 async def fetch_order(state) -> dict:
     """退款子流程第一步:抽订单号;缺了、或者报的不是自己的单,都 interrupt 弹订单选择器
-    等前端点选(resume 回填);拿到后 order_snapshot 取订单数据。
-    interrupt 之前只做只读(resume 时本节点从头重跑)。
+ 等前端点选(resume 回填);拿到后 order_snapshot 取订单数据。
+ interrupt 之前只做只读(resume 时本节点从头重跑)。
 
-    归属校验放在这里而不是只放在工具里:退款子流程是确定性节点,不经 agent_tools,
-    工具那道校验够不着。用户随口报的号、resume 端点回传的号,都得过同一道判断。"""
+ 归属校验放在这里而不是只放在工具里:退款子流程是确定性节点,不经 agent_tools,
+ 工具那道校验够不着。用户随口报的号、resume 端点回传的号,都得过同一道判断。"""
     uid = state.get("user_id", "")
     oid = state.get("order_id") or _extract_order_id(
         state.get("resolved_query") or _user_text(state))
@@ -81,8 +81,8 @@ async def fetch_order(state) -> dict:
 
 async def retrieve_policy(state) -> dict:
     """退款子流程强制检索政策:Query 扩写 3 条 → 多 query 各检索一次 → 按 chunk id 去重合并
-    (保留每 id 最高分)→ 按分降序拼编号证据。产出注入 main_agent 作「能不能退」的判据(README L194:
-    不让模型凭记忆答)。库里知识一份,扩写只在检索侧现查现用。"""
+ (保留每 id 最高分)→ 按分降序拼编号证据。产出注入 main_agent 作「能不能退」的判据(README L194:
+ 不让模型凭记忆答)。库里知识一份,扩写只在检索侧现查现用。"""
     base = state.get("resolved_query") or _user_text(state)
     od = state.get("order_data") or {}
     seed = f"{base} {od.get('status', '')}".strip()
@@ -108,8 +108,8 @@ async def retrieve_policy(state) -> dict:
 
 async def script_reply(state) -> dict:
     """fallback_script 出口:闲聊/其他 兜底话术(零模型),按 intent 分文案——闲聊把话题引回产品,
-    其他请用户说具体些。分流后立即命中、不进 Agent。
-    (与 ch05 知识路证据弱的 fallback_reply 是两码事,名字相近但不同节点、不同触发点,勿混。)"""
+ 其他请用户说具体些。分流后立即命中、不进 Agent。
+ (与 知识路证据弱的 fallback_reply 是两码事,名字相近但不同节点、不同触发点,勿混。)"""
     text = SCRIPT_REPLY_OTHER if state.get("intent") == "其他" else SCRIPT_REPLY_CHITCHAT
     return {"answer": text, "trace": {"route": "fallback_script"}}
 
@@ -127,8 +127,8 @@ async def complaint_reply(state) -> dict:
 
 async def fallback_reply(state) -> dict:
     """置信度兜底:证据弱回兜底话术,并把问题落低置信池留给数据飞轮
-    (ch09:source 打对标签 retrieval_low_conf/self_check,随条存召回快照给审核页)。
-    话术让用户「联系人工客服」,转人工按钮就得一并递给前端(actions 帧),不能光嘴上说。"""
+ (source 打对标签 retrieval_low_conf/self_check,随条存召回快照给审核页)。
+ 话术让用户「联系人工客服」,转人工按钮就得一并递给前端(actions 帧),不能光嘴上说。"""
     source = state.get("fallback_source") or "retrieval_low_conf"
     signals = state.get("trace", {}).get("confidence_signals") or {}
     reason = (f"evidence_confidence={state.get('evidence_confidence', 0.0):.3f} "
@@ -150,10 +150,10 @@ async def fallback_reply(state) -> dict:
 
 async def resolve_reference(state) -> dict:
     """指代消解 + Query 改写(合一):吃最近几轮历史把半截话补成完整问句;已完整则透传。
-    写 resolved_query,供 classify_intent 与 refund_flow 检索共用(意图识别不再改写)。"""
+ 写 resolved_query,供 classify_intent 与 refund_flow 检索共用(意图识别不再改写)。"""
     query = _user_text(state)
     history = _history_text(state)
-    # ch07 验收可观测:每轮必经此节点,摘要行+滑窗在这一条日志里直接可见
+    # 可观测:每轮必经此节点,摘要行+滑窗在这一条日志里直接可见
     # (model_ctx 只在进 main_agent 的路由才有,闲聊/兜底路由靠这条看)
     logger.info("history_ctx conv=%s(摘要行+滑窗,coref/意图共用)\n%s",
                 state.get("conversation_id"), history or "(无历史)")
@@ -164,22 +164,21 @@ async def resolve_reference(state) -> dict:
 
 async def classify_intent(state) -> dict:
     """意图四件套:八类 + confidence + 「其他」兜底。吃 resolved_query(空则回落原话)+ 最近历史
-    判当前意图(应对物流→退款→物流漂移)。把归属出口 route 落进 State(供 _agent_messages 判注入、
-    log 留痕;route 与条件边共用 route_by_intent,单一来源不漂移)。"""
+ 判当前意图(应对物流→退款→物流漂移)。把归属出口 route 落进 State(供 _agent_messages 判注入、
+ log 留痕;route 与条件边共用 route_by_intent,单一来源不漂移)。"""
     query = state.get("resolved_query") or _user_text(state)
     r = await intent_mod.classify(query, _history_text(state))
     intent, conf = r["intent"], r["confidence"]
     route = route_by_intent({**state, "intent": intent, "resolved_query": query})
-    tag_intent(intent, conf)   # ch09:意图进当前 trace 的 metadata+tag,Cost Control 按意图分堆
+    tag_intent(intent, conf)   # 意图进当前 trace 的 metadata+tag,Cost Control 按意图分堆
     return {"intent": intent, "intent_confidence": conf, "route": route,
             "trace": {"intent": intent, "intent_confidence": conf, "route": route}}
 
 
 async def retrieve_knowledge(state) -> dict:
-    """知识类强制检索(复用 ch03/04 检索器):产出编号证据 + 证据强弱信号。
-    ch09 把 ch05 最简机械闸升级成正式置信度闸(四信号加权,阈值评估集校准),
-    闸位不动:检索后、进 Agent 前。快照规则:只要走了检索就存 Top3 快照——
-    闸不过随落池写库;闸都过留在 state 供事后 👎 回捞(踩的往往是「检到了但答砸」)。"""
+    """知识类强制检索:产出编号证据和证据强弱信号。
+    检索后按四项信号加权做置信度闸,阈值用评估集校准。
+    闸不过就落库;闸过了也留下召回快照,方便事后点踩时回看。"""
     query_raw = _user_text(state)
     u = await query_understanding.understand(query_raw)
     query = u["standard"]
@@ -197,7 +196,7 @@ async def retrieve_knowledge(state) -> dict:
                 "trace": {"forced_rag": True, "evidence_confidence": conf.score,
                           "confidence_signals": conf.signals}}
 
-    # 语义闸:生成前自评证据够不够(README 的 useful 判断;ch09 修正:这才是 self_check 入口)
+    # 语义闸:生成前自评证据够不够(README 的 useful 判断;修正:这才是 self_check 入口)
     ev_texts = [f"{h['question']} {h['answer']}" for h in hits]
     chk = await selfcheck.check_sufficient(query, ev_texts)
     if not chk["useful"]:
@@ -219,7 +218,7 @@ async def retrieve_knowledge(state) -> dict:
 
 async def confidence_check(state) -> dict:
     """置信度兜底(生成前证据闸)的实体节点:留痕门控决策供可观测;
-    强/弱的实际分流在其后的条件边 confidence_gate(读 evidence_strong)。"""
+ 强/弱的实际分流在其后的条件边 confidence_gate(读 evidence_strong)。"""
     decision = "strong" if state.get("evidence_strong") else "weak"
     return {"trace": {"confidence": decision}}
 
@@ -234,8 +233,8 @@ _KNOWLEDGE_EVIDENCE_HINT = (
 def _turn_context(state) -> str:
     """本轮才有的材料:检索证据 + 退款路的订单数据。没有就返回空串。
 
-    顺序不能反:REFUND_JUDGE_HINT 的措辞是「下面给出该订单数据与检索到的退换货政策证据」,
-    它假设证据已在前文给过。"""
+ 顺序不能反:REFUND_JUDGE_HINT 的措辞是「下面给出该订单数据与检索到的退换货政策证据」,
+ 它假设证据已在前文给过。"""
     parts = []
     ss = memory.summary_system(state.get("summary"))
     if ss is not None:
@@ -255,10 +254,10 @@ TURN_CTX_ID = "turn-ctx"   # 哨兵:日志里据此把注入块跟真实用户�
 def _with_turn_context(window: list, turn_ctx: str) -> list:
     """把本轮材料插在滑窗里最后一条用户消息之后。
 
-    插在这个位置而不是整个列表末尾,是为了 ReAct 轮内也能命中前缀缓存:第 2 步的
-    [Sys, 用户问, 材料, AI, Tool] 完整包含第 1 步的 [Sys, 用户问, 材料] 作前缀;
-    追加到末尾则第 2 步变成 [Sys, 用户问, AI, Tool, 材料],公共前缀只到用户问那条。
-    窗口里没有用户消息(极端裁剪回退分支)时退化成追加到末尾,不抛异常。"""
+ 插在这个位置而不是整个列表末尾,是为了 ReAct 轮内也能命中前缀缓存:第 2 步的
+ [Sys, 用户问, 材料, AI, Tool] 完整包含第 1 步的 [Sys, 用户问, 材料] 作前缀;
+ 追加到末尾则第 2 步变成 [Sys, 用户问, AI, Tool, 材料],公共前缀只到用户问那条。
+ 窗口里没有用户消息(极端裁剪回退分支)时退化成追加到末尾,不抛异常。"""
     msg = HumanMessage(turn_ctx, id=TURN_CTX_ID)
     for i in range(len(window) - 1, -1, -1):
         if isinstance(window[i], HumanMessage):
@@ -267,17 +266,17 @@ def _with_turn_context(window: list, turn_ctx: str) -> list:
 
 
 def _agent_messages(state) -> list:
-    """拼装顺序固定(ch07):人设+红线 system → 滑窗原文 → 摘要与本轮材料(紧跟用户那句)。
+    """拼装顺序固定:人设与红线 system → 滑窗原文 → 摘要与本轮材料(紧跟用户那句)。
 
-    整条消息列表里**只有一条 SystemMessage**,内容恒为 AGENT_SYSTEM。这不是洁癖:
-    上游的 chat template 会把列表里所有 system 消息上提、合并成一个头部块渲染,所以
-    「摘要单独放第二条 system」等于把它拼在了 AGENT_SYSTEM 后面,工具 schema 被挤到
-    可变内容之后 —— 而 prompt caching 按渲染后的前缀精确匹配,于是整段前缀全 miss。
-    实测:无摘要的会话 cache_read=2048,摘要一进 system 就掉到 0。
-    摘要因此跟证据一起走用户侧那条消息。
+ 整条消息列表里**只有一条 SystemMessage**,内容恒为 AGENT_SYSTEM。这不是洁癖:
+ 上游的 chat template 会把列表里所有 system 消息上提、合并成一个头部块渲染,所以
+ 「摘要单独放第二条 system」等于把它拼在了 AGENT_SYSTEM 后面,工具 schema 被挤到
+ 可变内容之后 —— 而 prompt caching 按渲染后的前缀精确匹配,于是整段前缀全 miss。
+ 实测:无摘要的会话 cache_read=2048,摘要一进 system 就掉到 0。
+ 摘要因此跟证据一起走用户侧那条消息。
 
-    滑窗=两个锚点切三段(层 1 原文 / 层 2 半压 / 层 3 已进摘要不出现) + trim_messages
-    token 兜底;State 全量历史不动,这里只现拼精简版。"""
+ 滑窗=两个锚点切三段(层 1 原文 / 层 2 半压 / 层 3 已进摘要不出现) + trim_messages
+ token 兜底;State 全量历史不动,这里只现拼精简版。"""
     window = memory.build_window(state.get("messages", []),
                                  state.get("summary_upto_msg_id") or 0,
                                  state.get("layer1_from_msg_id") or 0)
@@ -288,10 +287,10 @@ def _agent_messages(state) -> list:
 
 
 def _log_model_context(state, msgs) -> None:
-    """ch07 验收可观测:把实际发给模型的摘要与滑窗打进日志(log/app.log)。
-    摘要本就几十到两百字,打全文;滑窗每条打角色+前 40 字。"""
+    """可观测:把实际发给模型的摘要与滑窗打进日志(log/app.log)。
+ 摘要本就几十到两百字,打全文;滑窗每条打角色+前 40 字。"""
     # 本轮材料块虽然也是 HumanMessage,但它不是用户说的话,从滑窗里摘出来单独报,
-    # 否则「window=N条」会凭空多一条,验收时读不准
+    # 否则「window=N条」会凭空多一条,时读不准
     ctx_block = next((m for m in msgs if getattr(m, "id", None) == TURN_CTX_ID), None)
     window = [m for m in msgs
               if not isinstance(m, SystemMessage) and getattr(m, "id", None) != TURN_CTX_ID]
@@ -310,12 +309,12 @@ def _log_model_context(state, msgs) -> None:
 
 async def main_agent(state, config=None) -> dict:
     """ReAct 推理步:调模型(带工具),累加 steps 与 token 消耗。
-    注:streaming=True 下 ChatOpenAI 默认不回传 usage_metadata;usage 回传已在
-    get_chat_model 统一收口(ch09 stream_usage=True),这里不再单独 bind。"""
-    specs = await registry.get_all_specs()   # ch08 现问现拿:内置+MCP 合并清单,每轮现拉
+ 注:streaming=True 下 ChatOpenAI 默认不回传 usage_metadata;usage 回传已在
+ get_chat_model 统一收口(stream_usage=True),这里不再单独 bind。"""
+    specs = await registry.get_all_specs()   # 现问现拿:内置+MCP 合并清单,每轮现拉
     model = get_chat_model(streaming=True).bind_tools([s.tool for s in specs])
     msgs = _agent_messages(state)
-    _log_model_context(state, msgs)   # ch07:摘要+滑窗进日志,验收 tail -f 可见
+    _log_model_context(state, msgs)   # 摘要+滑窗进日志, tail -f 可见
     ai: AIMessage = await model.ainvoke(msgs, config)
     usage = ai.usage_metadata or {}
     used = usage.get("total_tokens", 0)
@@ -331,14 +330,14 @@ async def main_agent(state, config=None) -> dict:
 
 
 async def agent_tools(state) -> dict:
-    """ReAct 行动步(ch08):一切工具经统一执行引擎。create_ticket(唯一写操作)走确认流——
-    参数齐则节点顶部 interrupt 推工单预览(interrupt 前只做纯计算,resume 重跑安全,照 fetch_order
-    范式);参数缺则交引擎按「校验拦下」回灌,模型自然向用户追问,不弹卡。
-    submit_refund 仍拦成前端退款表单(ch06 语义不变)。"""
+    """ReAct 行动步:一切工具经统一执行引擎。create_ticket(唯一写操作)走确认流——
+ 参数齐则节点顶部 interrupt 推工单预览(interrupt 前只做纯计算,resume 重跑安全,照 fetch_order
+ 范式);参数缺则交引擎按「校验拦下」回灌,模型自然向用户追问,不弹卡。
+ submit_refund 仍拦成前端退款表单(语义不变)。"""
     last = state["messages"][-1]
     cid = state.get("conversation_id", 0)
     uid = state.get("user_id", "")
-    specs = {s.name: s for s in await registry.get_all_specs()}   # ch08:执行侧同样现拉
+    specs = {s.name: s for s in await registry.get_all_specs()}   # 执行侧同样现拉
 
     # 建工单确认:先纯校验(无副作用),参数齐才 interrupt;resume 回 {"confirmed": bool}
     ticket_calls = [tc for tc in last.tool_calls if tc["name"] == "create_ticket"]

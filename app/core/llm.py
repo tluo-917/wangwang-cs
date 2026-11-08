@@ -28,15 +28,15 @@ def _diff_usage(cur: dict, prev: dict) -> dict:
 class _CumulativeUsageChatOpenAI(ChatOpenAI):
     """修正流式用量被重复累加的问题。
 
-    有些 OpenAI 兼容通道在**每个** chunk 上都重报一遍**累计**用量,而 langchain-openai
-    把各 chunk 的用量**相加**。两件事凑到一起,一次调用的 token 数会被放大到 chunk 条数倍
-    ——实测 24 个 chunk、input 恒为 11,聚合出来是 264。ch09 的成本账按这个数统计,
-    整体虚高一个量级;ch05 早先那道 token 预算闸也因此第一步就跳闸,工具从没执行过。
-    开关救不了:`stream_usage=False` 时上游照发、库照加。
+ 有些 OpenAI 兼容通道在**每个** chunk 上都重报一遍**累计**用量,而 langchain-openai
+ 把各 chunk 的用量**相加**。两件事凑到一起,一次调用的 token 数会被放大到 chunk 条数倍
+ ——实测 24 个 chunk、input 恒为 11,聚合出来是 264。的成本账按这个数统计,
+ 整体虚高一个量级;早先那道 token 预算闸也因此第一步就跳闸,工具从没执行过。
+ 开关救不了:`stream_usage=False` 时上游照发、库照加。
 
-    修法是在 chunk 转换的入口把累计值换成增量,再交给上游逻辑去加,加完正好等于最后一个
-    chunk 的累计值。只在末尾报一次用量的规范通道不受影响(增量就等于它本身)。
-    """
+ 修法是在 chunk 转换的入口把累计值换成增量,再交给上游逻辑去加,加完正好等于最后一个
+ chunk 的累计值。只在末尾报一次用量的规范通道不受影响(增量就等于它本身)。
+ """
 
     _prev_usage: dict = PrivateAttr(default_factory=dict)
 
@@ -57,7 +57,7 @@ class _CumulativeUsageChatOpenAI(ChatOpenAI):
 
 def resolve_slot(slot: str = "chat") -> tuple[str, str, str]:
     """按用途取 (模型名, 地址, key)。intent / summary 各是一个槽位,三项分别留空就
-    回落 CHAT 那组——只用一家上游时它们一个都不用填,想把某个用途换到别家才填。"""
+ 回落 CHAT 那组——只用一家上游时它们一个都不用填,想把某个用途换到别家才填。"""
     if slot == "chat":
         return settings.chat_model, settings.chat_base_url, settings.chat_api_key
     return (
@@ -71,18 +71,18 @@ def get_chat_model(streaming: bool = False, model: str | None = None,
                    temperature: float | None = None, slot: str = "chat",
                    thinking: bool = True) -> ChatOpenAI:
     """直连聊天上游,说 OpenAI 协议。
-    model 显式覆盖模型名(意图识别可配更大模型求准),None 时回落 settings.chat_model。
-    ch09:usage 统一收口——流式也回传 token(等效 stream_options.include_usage),
-    否则 Langfuse 按意图统计只有非流式调用的账,主力 Agent 全漏。
+ model 显式覆盖模型名(意图识别可配更大模型求准),None 时回落 settings.chat_model。
+ usage 统一收口——流式也回传 token(等效 stream_options.include_usage),
+ 否则 Langfuse 按意图统计只有非流式调用的账,主力 Agent 全漏。
 
-    temperature 默认 0.3(答用户的话要有点人味)。**当评委用的链路要显式传 0**:
-    同一份证据+同一份答案,0.3 下重放四次给出过 5/6、5/6、6/6、6/6 三种结果,
-    量出来的分数里就混进了采样噪声——评估要的是可复现,不是多样性。
+ temperature 默认 0.3(答用户的话要有点人味)。**当评委用的链路要显式传 0**:
+ 同一份证据+同一份答案,0.3 下重放四次给出过 5/6、5/6、6/6、6/6 三种结果,
+ 量出来的分数里就混进了采样噪声——评估要的是可复现,不是多样性。
 
-    thinking=False 显式关闭思考链。structured() 用它:DeepSeek 的 thinking 和
-    tool_choice 指定函数互斥(官方文档:思考模式下不支持 required 和指定具体 tool),
-    结构化输出走 function_calling 必须关。不能只是不传——DeepSeek 默认 thinking 开着,
-    不传等于开,所以 False 时显式发 disabled。"""
+ thinking=False 显式关闭思考链。structured() 用它:DeepSeek 的 thinking 和
+ tool_choice 指定函数互斥(官方文档:思考模式下不支持 required 和指定具体 tool),
+ 结构化输出走 function_calling 必须关。不能只是不传——DeepSeek 默认 thinking 开着,
+ 不传等于开,所以 False 时显式发 disabled。"""
     slot_model, base_url, api_key = resolve_slot(slot)
     thinking_kw = _thinking_kwargs() if thinking else {"extra_body": {"thinking": {"type": "disabled"}}}
     return _CumulativeUsageChatOpenAI(
@@ -100,9 +100,9 @@ def get_chat_model(streaming: bool = False, model: str | None = None,
 def _thinking_kwargs() -> dict:
     """把三项思考链配置拼成 ChatOpenAI 的参数。留空的不传,交给上游默认。
 
-    thinking 和 reasoning_split 不是 OpenAI 协议里的标准字段,得走 extra_body;
-    reasoning_effort 是标准字段,ChatOpenAI 直接认。上游不认的参数会被静默忽略
-    (给不认 thinking.type 的上游传过去,既不报错也不生效),所以这里不按 provider 分叉。"""
+ thinking 和 reasoning_split 不是 OpenAI 协议里的标准字段,得走 extra_body;
+ reasoning_effort 是标准字段,ChatOpenAI 直接认。上游不认的参数会被静默忽略
+ (给不认 thinking.type 的上游传过去,既不报错也不生效),所以这里不按 provider 分叉。"""
     kwargs: dict = {}
     extra: dict = {}
     if settings.chat_thinking:
@@ -153,16 +153,16 @@ def needs_non_streaming_tools(model: str | None = None, slot: str = "chat") -> b
 def structured(schema, *, model: str | None = None, streaming: bool = True,
                temperature: float | None = None, slot: str = "chat"):
     """要结构化结果就用这个,别直接 with_structured_output——它默认走 json_schema,
-    那条路解析正文,会被模型多吐的思考正文带崩。
+ 那条路解析正文,会被模型多吐的思考正文带崩。
 
-    默认开流式:中转的非流式 OpenAI 兼容层会把 tool_calls 的 arguments 拼坏,流式不会
-    (见上面那段注释里的实测)。
+ 默认开流式:中转的非流式 OpenAI 兼容层会把 tool_calls 的 arguments 拼坏,流式不会
+ (见上面那段注释里的实测)。
 
-    只有 function calling 一条通路。偶发失败原样重试一次,再不成就把异常抛给调用点——
-    调用点各自降级成安全默认值,别在这里降级到一条更差的通路上。
+ 只有 function calling 一条通路。偶发失败原样重试一次,再不成就把异常抛给调用点——
+ 调用点各自降级成安全默认值,别在这里降级到一条更差的通路上。
 
-    temperature 透传给底层模型:当评委用的结构化链路传 0(见 get_chat_model 的说明)。
-    """
+ temperature 透传给底层模型:当评委用的结构化链路传 0(见 get_chat_model 的说明)。
+ """
     from langchain_core.runnables import RunnableLambda
 
     slot_model, slot_base, _ = resolve_slot(slot)

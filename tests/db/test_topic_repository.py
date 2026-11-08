@@ -1,4 +1,4 @@
-"""ch10 地基:topic_classifications ORM 与 repository 归类方法。"""
+"""地基:topic_classifications ORM 与 repository 归类方法。"""
 from app.db import repository
 
 

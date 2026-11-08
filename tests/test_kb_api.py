@@ -1,8 +1,8 @@
 """知识库录入 API:切块预览是 dry-run、录入按指纹查重、参数白名单挡住乱传。
 
 重点锁两条容易回归的口径:
-  1. 预览不写库——按了预览再看库存,一块都不该多;
-  2. 同一份正文重复录入全跳过,而同一节切出的多块不许被当成重复误杀。
+ 1. 预览不写库——按了预览再看库存,一块都不该多;
+ 2. 同一份正文重复录入全跳过,而同一节切出的多块不许被当成重复误杀。
 """
 import pytest
 from fastapi import FastAPI
@@ -61,7 +61,7 @@ async def test_preview_is_dry_run(client):
 
 
 async def test_preview_rejects_bad_input(client):
-    assert (await client.post("/api/kb/preview", json={"text": "   "})).status_code == 400
+    assert (await client.post("/api/kb/preview", json={"text": " "})).status_code == 400
     assert (await client.post(
         "/api/kb/preview", json={"text": MD, "content_type": "乱写"})).status_code == 400
     # file 只认建库材料清单里的文件名,路径穿越连不上门
@@ -146,9 +146,9 @@ async def test_overview_survives_milvus_offline(client, monkeypatch):
 async def test_录入页给得出补丁式重嵌这条作业(client):
     """改了 data/kb/*.md 之后要能在页面上按 kb-repatch,不必回终端。
 
-    这条作业和 kb-reset 的区别是页面上唯一容易点错的地方:reset 会清掉飞轮写回的块,
-    repatch 只把正文变了的块原地改掉(id 不变,Milvus 同 id upsert 覆盖)。
-    """
+ 这条作业和 kb-reset 的区别是页面上唯一容易点错的地方:reset 会清掉飞轮写回的块,
+ repatch 只把正文变了的块原地改掉(id 不变,Milvus 同 id upsert 覆盖)。
+ """
     body = (await client.get("/api/kb/overview")).json()
     jobs = {j["name"]: j for j in body["jobs"]}
     assert "kb-repatch" in jobs
@@ -160,9 +160,9 @@ async def test_录入页给得出补丁式重嵌这条作业(client):
 async def test_挖出来的条目要人点采纳才进知识库(client, monkeypatch):
     """挖知识的入库口只有这一个,而且只认待审状态。
 
-    kb-mine 自己不写库——模型归纳出来的问答对质量参差,得人过一眼。所以这条断言的是
-    闸本身:待审时库里没有,采纳后才有。
-    """
+ kb-mine 自己不写库——模型归纳出来的问答对质量参差,得人过一眼。所以这条断言的是
+ 闸本身:待审时库里没有,采纳后才有。
+ """
     sid = await repository.insert_staging("mine-t", "conv:1", "运费怎么算", "满99包邮")
     await repository.set_staging_status([sid], "kept")
     assert (await repository.knowledge_stats())["total"] == 0    # 待审阶段库里一条没有

@@ -63,9 +63,9 @@ def fake_mine(monkeypatch):
 async def test_mine_不再往知识库写一个字(fake_mine, monkeypatch):
     """整条 mine() 里不许出现 write_pending —— 那是这道闸的全部意义。
 
-    守卫打在 dualwrite 模块本身上,不是打在 mining 的引用上:将来谁绕个圈子
-    (换个 import 写法、从别处调进来)想写库,照样在这里炸。
-    """
+ 守卫打在 dualwrite 模块本身上,不是打在 mining 的引用上:将来谁绕个圈子
+ (换个 import 写法、从别处调进来)想写库,照样在这里炸。
+ """
     async def _boom(chunks):
         raise AssertionError("mine() 不许写知识库,入库只能走 /api/kb/staging/approve")
 

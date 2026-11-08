@@ -1,4 +1,4 @@
-"""ch10 预标:大模型照权威术语表给问题打多标签。折中路线的前半——预标,后半人工抽审。"""
+"""预标:大模型照权威术语表给问题打多标签。折中路线的前半——预标,后半人工抽审。"""
 import asyncio
 
 from pydantic import BaseModel, Field

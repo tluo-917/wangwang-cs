@@ -1,4 +1,4 @@
-"""ch08 统一执行引擎:所有工具调用的唯一通道。
+"""统一执行引擎:所有工具调用的唯一通道。
 管道:查工具 → JSON Schema 校验 → 权限门 → 执行(超时/重试)→ 分诊 → 格式化 + 审计。
 坏消息如实回灌模型;审计写失败只 log,绝不反拦工具执行。"""
 import asyncio
@@ -37,7 +37,7 @@ class ToolRun:
 
 def validate_args(spec: ToolSpec, args: dict) -> str | None:
     """按 JSON Schema 校验模型给的参数;返回人类可读错误(None=通过)。agent_tools 复用它
-    判「create_ticket 参数齐不齐、要不要弹确认卡」。"""
+ 判「create_ticket 参数齐不齐、要不要弹确认卡」。"""
     err = best_match(Draft202012Validator(spec.json_schema).iter_errors(args))
     if err is None:
         return None
@@ -57,7 +57,7 @@ def _summarize(content: str) -> str:
 
 def _format_content(spec: ToolSpec, result) -> str:
     """结果格式化:MCP 工具(adapters)返回内容块列表 [{"type":"text","text":...}],先拆出文本;
-    JSON 文本解回 dict;format_result 钩子挑字段/枚举翻人话;统一 ensure_ascii=False(中文不转义)。"""
+ JSON 文本解回 dict;format_result 钩子挑字段/枚举翻人话;统一 ensure_ascii=False(中文不转义)。"""
     if isinstance(result, list) and result and all(isinstance(b, dict) for b in result):
         texts = [b.get("text", "") for b in result if b.get("type") == "text"]
         if texts:
@@ -78,8 +78,8 @@ def _format_content(spec: ToolSpec, result) -> str:
 def _cap_tokens(content: str) -> str:
     """把回灌模型的工具结果卡进预算。
 
-    预算是启动时算好的,运行时没有第二道闸——不在这里截,一个大列表就能把整轮冲掉。
-    切在行边界上,别把一条记录劈两半。审计不受影响,那边本来就只留摘要。"""
+ 预算是启动时算好的,运行时没有第二道闸——不在这里截,一个大列表就能把整轮冲掉。
+ 切在行边界上,别把一条记录劈两半。审计不受影响,那边本来就只留摘要。"""
     limit = memory.tokens_to_chars(settings.tool_result_max_tokens)
     if len(content) <= limit:
         return content
@@ -90,7 +90,7 @@ def _cap_tokens(content: str) -> str:
 
 async def _audit(conversation_id, tool_call_id, name, spec: ToolSpec | None, args,
                  result_summary, status, error_message, retry_count, duration_ms) -> None:
-    # ch08 验收可观测(照 ch07 model_ctx 惯例):每次工具调用一行 tool_run,来源/Server/结局
+    # 可观测(照 model_ctx 惯例):每次工具调用一行 tool_run,来源/Server/结局
     # tail -f log/app.log 直接看——"这次真走了 MCP"不用翻库
     logger.info("tool_run conv=%s tool=%s source=%s server=%s status=%s retry=%s duration_ms=%s%s",
                 conversation_id or "-", name,
@@ -117,8 +117,8 @@ async def execute_tool_call(
     *, confirmed: bool = False, deny_note: str | None = None, user_id: str = "",
 ) -> ToolRun:
     """统一入口(never-raises 契约):无论校验拦下、权限拒绝还是真故障,一律回 ToolRun,
-    坏消息包成 ToolMessage 回灌模型。confirmed 是写操作确认令牌,只能由 agent_tools 在
-    interrupt 确认后传入——模型自己无法绕过权限门。"""
+ 坏消息包成 ToolMessage 回灌模型。confirmed 是写操作确认令牌,只能由 agent_tools 在
+ interrupt 确认后传入——模型自己无法绕过权限门。"""
     name = tool_call.get("name") or ""
     tc_id = tool_call.get("id") or ""
     args = dict(tool_call.get("args") or {})

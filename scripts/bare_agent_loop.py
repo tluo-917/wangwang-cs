@@ -12,7 +12,7 @@ from app.tools import engine, registry
 
 
 async def run_agent(query: str, max_turns: int = 6):
-    specs = {s.name: s for s in await registry.get_all_specs()}   # ch08:内置+MCP 现拉
+    specs = {s.name: s for s in await registry.get_all_specs()}   # 内置+MCP 现拉
     model = get_chat_model().bind_tools([s.tool for s in specs.values()])
     messages = [SystemMessage(AGENT_SYSTEM), HumanMessage(query)]
     for step in range(1, max_turns + 1):

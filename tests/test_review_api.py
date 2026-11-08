@@ -1,4 +1,4 @@
-"""ch09 审核 API:列表/详情/通过(写回知识库)/驳回;只有待审可流转;写回失败状态不动。"""
+"""审核 API:列表/详情/通过(写回知识库)/驳回;只有待审可流转;写回失败状态不动。"""
 import pytest
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient

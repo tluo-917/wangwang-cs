@@ -1,4 +1,4 @@
-"""ch07 摘要 prompt 标注样例验证(纯 Prompt 任务以 eval 代 TDD)。需聊天上游可调通。
+"""摘要 prompt 标注样例验证(纯 Prompt 任务以 eval 代 TDD)。需聊天上游可调通。
 断言:严格 JSON(structured output 保证)、关键事实保留、无编造实体、长度达标、寒暄不留。
 用法:uv run python -m scripts.eval_ch07"""
 import asyncio

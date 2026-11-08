@@ -1,13 +1,13 @@
-"""「观测与成本」页的只读 API:ch09 那三张终端报表搬进后台,一页看齐、也能在页上重跑。
+"""「观测与成本」页的只读 API:那三张终端报表搬进后台,一页看齐、也能在页上重跑。
 
 三块各有自己的权威源,这里只负责端出去:
 
 - 意图成本账:`data/ch09/reports/cost_by_intent.json`(make cost-report 落的产物),
-  平均 token 与占比都是脚本算好写进去的,这里不复算——不然页面和终端会有两个数。
+ 平均 token 与占比都是脚本算好写进去的,这里不复算——不然页面和终端会有两个数。
 - 评估趋势:`eval_runs` 表就是趋势本身的权威源(make eval-flywheel 每轮插一行),
-  所以直接读表,不去读那份文本报告。涨跌箭头由页面按同一批行算,不是另一份数据。
+ 所以直接读表,不去读那份文本报告。涨跌箭头由页面按同一批行算,不是另一份数据。
 - 置信度阈值校准:`data/ch09/reports/confidence_calibration.json`(make calibrate-confidence),
-  另带一份「当前在用的阈值」,让人看得出推荐值和线上值对不对得上。
+ 另带一份「当前在用的阈值」,让人看得出推荐值和线上值对不对得上。
 
 每块的「读图」小注也来自产物(脚本落盘时让模型看着那一轮的数写的),这里只端出去。
 趋势那句注旁挂在 eval_trend_note.json 里,只有它记的轮次还是最新一轮时才端,
@@ -98,7 +98,7 @@ async def _trend_block() -> dict:
 
 def _calibration_block() -> dict:
     block = _block(CALIB_JOB, "make calibrate-confidence",
-                   "还没校准过。按「重跑 置信度阈值校准」在 ch04 评估集上扫一遍,阈值就不用拍脑袋。")
+                   "还没校准过。按「重跑 置信度阈值校准」在检索评估集上扫一遍,阈值就不用拍脑袋。")
     block["in_use"] = settings.evidence_confidence_threshold
     block["weights"] = {"top1": W_TOP1, "valid_count": W_VALID,
                         "margin": W_MARGIN, "key_clause": W_KEY}

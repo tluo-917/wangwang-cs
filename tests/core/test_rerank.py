@@ -58,9 +58,9 @@ async def test_rerank_empty_docs():
 async def test_断连也退避重试_不是只认状态码(monkeypatch):
     """上游把连接掐了跟回 503 一样是瞬时故障,一样得重试。
 
-    早先 _post 只在拿到 resp 之后判状态码,c.post 抛出来就直接冒到顶:上游回 503
-    会重试,上游断连反而一次都不试。eval-rag 跑到第 200 多题被断一次,整轮白跑。
-    """
+ 早先 _post 只在拿到 resp 之后判状态码,c.post 抛出来就直接冒到顶:上游回 503
+ 会重试,上游断连反而一次都不试。eval-rag 跑到第 200 多题被断一次,整轮白跑。
+ """
     calls = {"n": 0}
 
     class _Resp:

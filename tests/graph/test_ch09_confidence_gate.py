@@ -1,4 +1,4 @@
-"""ch09 闸升级:置信度低→retrieval_low_conf;置信度过但自评不过→self_check;
+"""闸升级:置信度低→retrieval_low_conf;置信度过但自评不过→self_check;
 快照只要走了检索就写 state;fallback 落池带对 source 与快照。"""
 import pytest
 

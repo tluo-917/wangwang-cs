@@ -32,8 +32,8 @@ async def test_layer2_over_budget_triggers(monkeypatch):
 async def test_条数攒得再多_层2是空的也不压(monkeypatch):
     """双层时代那条「新增满 N 条就压」的定时器已经删掉。
 
-    留在三层里会坏事:层 2 刚被降级填进东西就被它清空,中间层等于白设。
-    判据只有一条,层 2 超预算才压。"""
+ 留在三层里会坏事:层 2 刚被降级填进东西就被它清空,中间层等于白设。
+ 判据只有一条,层 2 超预算才压。"""
     monkeypatch.setattr(summarizer.repository, "list_dialog_messages", lambda cid: _async([]))
     assert not await summarizer._should_summarize(1, _Conv())
 

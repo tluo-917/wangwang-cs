@@ -40,7 +40,7 @@ def get_client(uri: str | None = None) -> MilvusClient:
 
 def ensure_collection(client: MilvusClient, collection: str = COLLECTION) -> None:
     """幂等建集合:dense(COSINE) + text(chinese analyzer) + sparse(BM25 Function) + 标量字段。
-    单例默认集合只实际执行一次;不同集合名(测试临时库)各自 ensure。"""
+ 单例默认集合只实际执行一次;不同集合名(测试临时库)各自 ensure。"""
     if client is _CLIENT and collection in _ensured:
         return
     if client.has_collection(collection):

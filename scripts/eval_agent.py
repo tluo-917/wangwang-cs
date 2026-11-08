@@ -10,9 +10,9 @@ BASE = "http://localhost:8000"
 # (用户问法, 期望命中的工具名集合;None 表示期望不调用任何工具)
 SAMPLES = [
     ("订单 1001 的物流到哪了", {"query_logistics"}),
-    ("退货政策是什么", {"query_faq"}),          # 验收2:query_faq 命中
+    ("退货政策是什么", {"query_faq"}),          # 2:query_faq 命中
     ("买的鞋子能不能退", {"query_faq"}),          # 模型提「退货」→ 命中「退货政策」,未漏(语义提参救了)
-    ("邮费是多少", {"query_faq"}),               # 验收3:模型提「邮费」→ LIKE question 漏,但答案在「运费怎么算」→ 语义鸿沟,留 ch03
+    ("邮费是多少", {"query_faq"}),               # 3:模型提「邮费」→ LIKE question 漏,但答案在「运费怎么算」→ 语义鸿沟,留 ch03
     ("iPhone 还有货吗", {"query_product"}),
     ("订单 2002 多少钱", {"query_order"}),
     ("我要投诉,给我登记一下", {"create_ticket"}),

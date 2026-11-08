@@ -1,9 +1,9 @@
-"""ch10 验收 API:把原本只能在终端看的九项实证搬上页面。只读 + 作业发起,不改任何产物。
+""" API:把原本只能在终端看的九项实证搬上页面。只读 + 作业发起,不改任何产物。
 
 数据来源分两类:
-  1. 落盘产物(reports/*.json、dataset/*.jsonl、model/):由各 make 目标产出,这里只读不算
-     ——页面上的数和终端跑出来的必须是同一份,不许在 API 里重算一遍造出第二个真相。
-  2. 现场探活(:8110 healthz、单句试分类、文件 stat):秒级,请求时现取。
+ 1. 落盘产物(reports/*.json、dataset/*.jsonl、model/):由各 make 目标产出,这里只读不算
+ ——页面上的数和终端跑出来的必须是同一份,不许在 API 里重算一遍造出第二个真相。
+ 2. 现场探活(:8110 healthz、单句试分类、文件 stat):秒级,请求时现取。
 产物缺失不报错,回 present=false + 该跑哪个 make 目标,页面据此长出「重跑」按钮。
 """
 import json
@@ -78,7 +78,7 @@ def _read_jsonl(path: pathlib.Path) -> list[dict]:
 
 def _split_stats() -> dict:
     """三份考卷的规模 + 各类标签计数 + 「考题有没有漏进练习题」的重叠自检。
-    重叠必须是 0:验证/测试是考卷,一旦被训练集见过,后面所有分数都不作数。"""
+ 重叠必须是 0:验证/测试是考卷,一旦被训练集见过,后面所有分数都不作数。"""
     texts: dict[str, set[str]] = {}
     out: dict[str, dict] = {}
     for key, desc in SPLITS:
@@ -122,8 +122,8 @@ def _threshold_in_use() -> float | None:
 
 @router.get("/overview")
 async def overview() -> dict:
-    """验收总览:九个区块各给一句结论 + 一个闸门状态(pass / fail / missing)。
-    状态口径:missing = 产物还没有;fail = 跑过但没过线;pass = 跑过且过线。"""
+    """总览:九个区块各给一句结论 + 一个闸门状态(pass / fail / missing)。
+ 状态口径:missing = 产物还没有;fail = 跑过但没过线;pass = 跑过且过线。"""
     golden = _load_report("golden_report.json", "ch10-golden")
     evaluation = _load_report("eval_report.json", "ch10-eval")
     scan = _load_report("threshold_scan.json", "ch10-threshold-scan")
@@ -147,7 +147,7 @@ async def overview() -> dict:
 
     def note(present: bool, ok: bool | None, yes: str, no: str) -> str:
         """产物没跑过时不许显示失败态的结论——「没跑过」不等于「没过线」,
-        直接把 no 文案摆出来会把读者引到错误的下一步动作。"""
+ 直接把 no 文案摆出来会把读者引到错误的下一步动作。"""
         if not present:
             return "还没跑过,点右下按钮现场跑一遍"
         return yes if ok else no
@@ -274,8 +274,8 @@ async def data_detail() -> dict:
 async def errors_detail() -> dict:
     """错例复核页数据:逐条标准/预测对照 + 错误方向(漏打/多打/错位)+ 边界摩擦配对统计。
 
-    配对统计是机器算的:把「该打没打的类 ← 反而打了的类」按对计数,同一对反复出现
-    就是两类之间有边界摩擦,补对照句要成对补。补哪些句子是人的判断,页面不替人编。"""
+ 配对统计是机器算的:把「该打没打的类 ← 反而打了的类」按对计数,同一对反复出现
+ 就是两类之间有边界摩擦,补对照句要成对补。补哪些句子是人的判断,页面不替人编。"""
     evaluation = _load_report("eval_report.json", "ch10-eval")
     if not evaluation.get("present"):
         return {"eval": evaluation, "errors": [], "kinds": {}, "pairs": []}
@@ -295,7 +295,7 @@ async def errors_detail() -> dict:
         "total_fp": evaluation["total_fp"], "total_fn": evaluation["total_fn"],
         "pairs": [{"missed": m, "grabbed": g, "count": c, "severity": SEVERITY.get(m)}
                   for (m, g), c in sorted(pairs.items(), key=lambda x: -x[1])],
-        # 三种错各自的修法配方(课程结论,不是每条错例的具体补句)
+        # 三种错各自的修法配方(结论,不是每条错例的具体补句)
         "recipes": {
             "漏打": "次要诉求被主旋律淹没 → 补「主诉求 + 顺带诉求」的双标签句",
             "错位": "某个词横跨两类 → 成对补对照句,两边同时喂才学得会看语境",
@@ -317,7 +317,7 @@ class ClassifyIn(BaseModel):
 @router.post("/classify")
 async def classify(body: ClassifyIn) -> dict:
     """单句试分类:把一句话喂 :8110,回 17 类分数 + 过线标签。
-    页面拿它演示「17 类各自独立过线,过几个打几个」——多标签机制的现场证据。"""
+ 页面拿它演示「17 类各自独立过线,过几个打几个」——多标签机制的现场证据。"""
     text = body.text.strip()
     if not text:
         raise HTTPException(status_code=400, detail="请输入一句话")
@@ -341,4 +341,4 @@ async def classify(body: ClassifyIn) -> dict:
 
 
 # 「重跑」按钮的发起 / 状态 / 停止在 app/api/jobs.py(前缀 /api/jobs):
-# 知识库建库与分类器验收共用同一个作业运行器,端点就只该有一处。
+# 知识库建库与分类器共用同一个作业运行器,端点就只该有一处。

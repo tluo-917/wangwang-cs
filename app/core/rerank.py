@@ -11,9 +11,9 @@ _VERSION_SEG = re.compile(r"/v\d+$")
 def _rerank_url() -> str:
     """把配置里的上游地址拼成 /rerank 端点。每次现算,改配置不用重启。
 
-    地址带不带版本段都收:硅基流动和 Jina 的 rerank 在 /v1 下,Cohere 在 /v2 下,而
-    「上游地址」按字面理解很容易只填到域名。少了版本段会打成 https://host/rerank,
-    上游回 404,而且只在查询时以 hybrid_rerank 失败的形式冒出来,排障要绕一圈。"""
+ 地址带不带版本段都收:硅基流动和 Jina 的 rerank 在 /v1 下,Cohere 在 /v2 下,而
+ 「上游地址」按字面理解很容易只填到域名。少了版本段会打成 https://host/rerank,
+ 上游回 404,而且只在查询时以 hybrid_rerank 失败的形式冒出来,排障要绕一圈。"""
     base = settings.rerank_base_url.rstrip("/")
     if not _VERSION_SEG.search(base):
         base += "/v1"
@@ -27,8 +27,8 @@ _BACKOFF = 1.5        # 秒,每次翻倍
 
 async def _post(url, json, headers, timeout):
     """带退避重试:子句拆分之后一个问题要打好几次 /rerank,上游按秒限流,
-    突发流量会撞 429。这是瞬时限流不是坏请求,退一步再试就过去了;
-    连试几次还不行才抛出去(评估脚本会把这一轮记成失败,不会静默算低分)。"""
+ 突发流量会撞 429。这是瞬时限流不是坏请求,退一步再试就过去了;
+ 连试几次还不行才抛出去(评估脚本会把这一轮记成失败,不会静默算低分)。"""
     last: httpx.Response | None = None
     last_exc: Exception | None = None
     for i in range(_RETRIES + 1):
@@ -57,9 +57,9 @@ async def _post(url, json, headers, timeout):
 async def rerank(query: str, docs: list[str], top_n: int | None = None) -> list[tuple[int, float]]:
     """直连上游 /rerank 调 bge-reranker-v2-m3。返回 [(原始索引, 相关分)] 按分降序,截断 top_n。
 
-    rerank 不是 OpenAI 协议里的东西,这个接口走的是 Jina / Cohere 那套形状
-    (query + documents,回 results 里的 index 与 relevance_score),所以这里手写请求、
-    不用 openai 客户端。"""
+ rerank 不是 OpenAI 协议里的东西,这个接口走的是 Jina / Cohere 那套形状
+ (query + documents,回 results 里的 index 与 relevance_score),所以这里手写请求、
+ 不用 openai 客户端。"""
     if not docs:
         return []
     payload = {"model": settings.rerank_model, "query": query, "documents": docs,

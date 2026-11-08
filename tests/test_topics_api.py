@@ -1,4 +1,4 @@
-"""ch10 主题 API:分布(17 类全出、计数正确)与类目问题列表(分页、多标签、未知类目挡住)。"""
+"""主题 API:分布(17 类全出、计数正确)与类目问题列表(分页、多标签、未知类目挡住)。"""
 import pytest
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient

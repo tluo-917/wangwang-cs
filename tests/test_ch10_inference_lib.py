@@ -1,4 +1,4 @@
-"""ch10 阈值应用与兜底纯函数(evaluate/serve 共用,行为不许分叉)。"""
+"""阈值应用与兜底纯函数(evaluate/serve 共用,行为不许分叉)。"""
 import numpy as np
 
 from scripts.ch10.inference_lib import apply_threshold

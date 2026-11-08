@@ -18,8 +18,8 @@ class QaPair(BaseModel):
 
 class QaExtraction(BaseModel):
     """LLM 结构化输出 schema:用两个并列标量数组一一对应。
-    实测 glm-5.2 的 anthropic 兼容上游对嵌套对象数组(list[对象])的工具 schema 会 502,
-    标量 list[str] 正常,故不用 list[QaPair],改并列数组规避。"""
+ 实测 glm-5.2 的 anthropic 兼容上游对嵌套对象数组(list[对象])的工具 schema 会 502,
+ 标量 list[str] 正常,故不用 list[QaPair],改并列数组规避。"""
 
     questions: list[str] = Field(
         default_factory=list, description="问法列表,与 answers 一一对应;无可复用问答则为空"
@@ -57,11 +57,11 @@ async def _load_conversation_texts() -> list[tuple[str, str]]:
 async def mine(batch_size: int = 20, model=None) -> dict:
     """可重跑 job:对话 → 分批 LLM 抽取写 staging → 整体去重 → kept 停在暂存表等人审。
 
-    **不直接写 knowledge_chunks**:抽出来的问答对是模型从聊天记录里归纳的,客服当时那句
-    回答可能只对那一单成立,可能带着具体订单号和收货地址,也可能只是一句「稍等我帮您看看」。
-    这种东西进了库,之后每次检索都可能被捞出来当依据。所以挖完就停,人在 /kb 页面
-    「对话挖知识」那张卡片上逐条采纳或弃用,采纳的才入库(见 app/api/kb.py 的 staging 两个端点)。
-    """
+ **不直接写 knowledge_chunks**:抽出来的问答对是模型从聊天记录里归纳的,客服当时那句
+ 回答可能只对那一单成立,可能带着具体订单号和收货地址,也可能只是一句「稍等我帮您看看」。
+ 这种东西进了库,之后每次检索都可能被捞出来当依据。所以挖完就停,人在 /kb 页面
+ 「对话挖知识」那张卡片上逐条采纳或弃用,采纳的才入库(见 app/api/kb.py 的 staging 两个端点)。
+ """
     sources = await _load_conversation_texts()
     batch_no = datetime.now().strftime("mine-%Y%m%d%H%M%S")
     # 1) 分批抽取 → 写 staging(extracted)

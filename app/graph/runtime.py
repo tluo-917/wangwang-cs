@@ -36,7 +36,7 @@ async def init_graph() -> None:
     _cm = AsyncSqliteSaver.from_conn_string(settings.checkpointer_db_path)
     checkpointer = await _cm.__aenter__()
     await checkpointer.setup()
-    # ch09:编译时挂一次 Langfuse 回调,全图自动 trace(未配置时原样返回,零依赖)
+    # 编译时挂一次 Langfuse 回调,全图自动 trace(未配置时原样返回,零依赖)
     _graph = attach_observability(build_graph(checkpointer=checkpointer))
     logger.info("图已编译,checkpointer=%s", settings.checkpointer_db_path)
 
@@ -56,8 +56,8 @@ def get_graph():
 
 
 async def get_turn_snapshot(conversation_id: int) -> dict:
-    """👎 快照尽力回捞(ch09):读该会话 checkpointer 终态,返回最近一轮的用户问题与召回快照。
-    调用方拿去比对被踩的 question,对得上才用快照——踩历史消息时快照可能已是别轮的,不硬塞。"""
+    """点踩时尽力回捞快照:读该会话的终态,返回最近一轮的用户问题和召回快照。
+ 调用方拿去比对被踩的 question,对得上才用快照——踩历史消息时快照可能已是别轮的,不硬塞。"""
     config = {"configurable": {"thread_id": str(conversation_id)}}
     st = await get_graph().aget_state(config)
     values = getattr(st, "values", None) or {}
@@ -71,7 +71,7 @@ async def get_turn_snapshot(conversation_id: int) -> dict:
 
 def dedup_actions(actions: list) -> list:
     """跨多个 ReAct 轮次累积的 suggested_actions 可能重复(如 agent 多次提议
-    create_ticket);按 type 去重,保留每种 type 首次出现的那条。"""
+ create_ticket);按 type 去重,保留每种 type 首次出现的那条。"""
     seen = set()
     out = []
     for action in actions:
@@ -86,7 +86,7 @@ def dedup_actions(actions: list) -> list:
 async def _ensure_conversation(user_id: str,
                                conversation_id: int | None) -> tuple[int, str, int, int]:
     """返回 (cid, summary, summary_upto_msg_id, layer1_from_msg_id):
-    入口一次库读把摘要和两个分层锚点一并带出。"""
+ 入口一次库读把摘要和两个分层锚点一并带出。"""
     if conversation_id is None:
         return await repository.create_conversation(user_id), "", 0, 0
     conv = await repository.get_conversation(conversation_id)
@@ -101,7 +101,7 @@ def _graph_input(user_id: str, message: str, cid: int, msg_id: int,
     # 显式重置每轮的输出通道:checkpointer 按 thread_id 持久化 State,这些无 reducer 的标量
     # 会跨轮残留(如上一轮闲聊/投诉的 answer、建工单可选项串到本轮),须在入口清零。
     # messages 有 add_messages reducer(追加=跨轮历史),不清;steps/tokens_used 是本轮预算。
-    # ch07:用户消息带 db-{msg_id} 锚点(滑窗与摘要边界对齐);summary 两字段每轮从库刷新。
+    # 用户消息带 db-{msg_id} 锚点(滑窗与摘要边界对齐);summary 两字段每轮从库刷新。
     return {"messages": [HumanMessage(message, id=f"db-{msg_id}")], "user_id": user_id,
             "conversation_id": cid, "steps": 0, "tokens_used": 0,
             "answer": "", "suggested_actions": [], "evidence": "",
@@ -116,7 +116,7 @@ def _graph_input(user_id: str, message: str, cid: int, msg_id: int,
 
 def _interrupt_payload(state: dict):
     """从终态提取中断负载(整个 __interrupt__[0].value:含 type + orders/preview 等);
-    无中断返回 None。ch08 起中断不止订单选择器,负载透传、消费方按 type 分发。"""
+ 无中断返回 None。起中断不止订单选择器,负载透传、消费方按 type 分发。"""
     intr = state.get("__interrupt__")
     if not intr:
         return None
@@ -133,11 +133,11 @@ async def settle_layers(cid: int, state: dict | None,
                         summary_upto: int, layer1_from: int) -> None:
     """轮末结算分层:层 1 超预算就把起点往后挪一批。
 
-    纯计算,不调模型,不阻塞。挪一次挪到位、两次之间不动——边界稳住,渲染才逐字节
-    稳定,前缀缓存才保得住;每轮微调等于每轮重写中间内容,缓存天天作废。
+ 纯计算,不调模型,不阻塞。挪一次挪到位、两次之间不动——边界稳住,渲染才逐字节
+ 稳定,前缀缓存才保得住;每轮微调等于每轮重写中间内容,缓存天天作废。
 
-    state 传 None 时自己去 checkpointer 取(流式路径拿不到终态)。整段吞异常:
-    这是轮末的锦上添花,不能影响已经发出去的回复。"""
+ state 传 None 时自己去 checkpointer 取(流式路径拿不到终态)。整段吞异常:
+ 这是轮末的锦上添花,不能影响已经发出去的回复。"""
     try:
         if state is None:
             state = await _final_state(cid)
@@ -161,13 +161,13 @@ async def run_turn(user_id, message, conversation_id) -> dict:
     """非流式:落 user 消息 → ainvoke → 返回终态(供 /api/agent、eval)。遇 interrupt 带 orders。"""
     cid, summary, upto, layer1 = await _ensure_conversation(user_id, conversation_id)
     msg_id = await repository.append_message(cid, "user", content=message)
-    # ch09:langfuse_session_id 让同一会话多轮在 Langfuse 界面串成一组(未挂回调时无害)
+    # langfuse_session_id 让同一会话多轮在 Langfuse 界面串成一组(未挂回调时无害)
     config = {"configurable": {"thread_id": str(cid)},
               "metadata": {"langfuse_session_id": str(cid)}}
     final = await get_graph().ainvoke(
         _graph_input(user_id, message, cid, msg_id, summary, upto, layer1), config)
     await settle_layers(cid, final, upto, layer1)  # 层1 超预算就降级一批(纯计算)
-    await summarizer.maybe_schedule_summary(cid)   # ch07 轮后触发检查(后台跑,不阻塞返回)
+    await summarizer.maybe_schedule_summary(cid)   # 轮后触发检查(后台跑,不阻塞返回)
     return {"conversation_id": cid, "state": final, "interrupt": _interrupt_payload(final)}
 
 
@@ -185,8 +185,8 @@ async def resume_turn(conversation_id: int, resume_value) -> dict:
 
 async def _stream_events(cid: int, stream_source) -> AsyncIterator[dict]:
     """astream 多模式 → 事件 dict。stream_source 为 _graph_input(...)(新一轮)或 Command(resume=...)(续跑)。
-    遇 interrupt(updates 块含 __interrupt__,Task 1 冒烟钉死)→ 吐 interrupt 事件并结束本次流
-    (前端点选后走 /api/actions/resume 续流)。"""
+ 遇 interrupt(updates 块含 __interrupt__,Task 1 冒烟钉死)→ 吐 interrupt 事件并结束本次流
+ (前端点选后走 /api/actions/resume 续流)。"""
     config = {"configurable": {"thread_id": str(cid)},
               "metadata": {"langfuse_session_id": str(cid)}}
     actions: list = []
@@ -203,7 +203,7 @@ async def _stream_events(cid: int, stream_source) -> AsyncIterator[dict]:
             if "__interrupt__" in chunk:
                 payload = chunk["__interrupt__"][0].value
                 # 带上 conversation_id:中断时不发 done 帧,前端要靠这个才知道续跑用哪个会话。
-                # ch08:负载按中断类型透传(select_order 带 orders,confirm_ticket 带 preview),
+                # 负载按中断类型透传(select_order 带 orders,confirm_ticket 带 preview),
                 # 前端按 kind 分发。
                 ev = {"type": "interrupt", "kind": payload.get("type", ""), "conversation_id": cid}
                 for k in ("orders", "preview"):
@@ -222,7 +222,7 @@ async def _stream_events(cid: int, stream_source) -> AsyncIterator[dict]:
                     for m in upd.get("messages", []):
                         name = getattr(m, "name", None)
                         # submit_refund 仍是「拦成前端表单」的合成消息,不发工具帧;
-                        # create_ticket ch08 起确认后真执行,照常发帧
+                        # create_ticket 起确认后真执行,照常发帧
                         if name and name != "submit_refund":
                             yield {"type": "tool", "name": name}
                 if upd.get("suggested_actions"):
@@ -240,7 +240,7 @@ async def stream_turn(user_id, message, conversation_id) -> AsyncIterator[dict]:
             cid, _graph_input(user_id, message, cid, msg_id, summary, upto, layer1)):
         yield ev
     await settle_layers(cid, None, upto, layer1)   # 流式拿不到终态,内部自取
-    await summarizer.maybe_schedule_summary(cid)   # ch07 流吐完再触发(后台跑,不阻塞)
+    await summarizer.maybe_schedule_summary(cid)   # 流吐完再触发(后台跑,不阻塞)
 
 
 async def stream_resume(conversation_id: int, resume_value) -> AsyncIterator[dict]:

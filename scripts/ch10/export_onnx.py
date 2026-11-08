@@ -1,7 +1,7 @@
-"""ch10 ONNX 导出:torch 模型 → onnx(变长 batch/seq),导出后跑测试集校验与 torch 预测完全一致。
+"""ONNX 导出:torch 模型 → onnx(变长 batch/seq),导出后跑测试集校验与 torch 预测完全一致。
 注意:torch 2.9+ 的 torch.onnx.export 默认 dynamo=True,导 HF 模型此处显式 dynamo=False
 走 TorchScript 导出器 + dynamic_axes 稳定路线(Context7 查证)。运行:make ch10-export。
-落 reports/export_report.json 给验收页读(/acceptance):校验条数、不一致条数、产物大小。"""
+落 reports/export_report.json 给页读(/acceptance):校验条数、不一致条数、产物大小。"""
 import datetime as dt
 import json
 import pathlib
@@ -19,7 +19,7 @@ REPORTS = pathlib.Path("data/ch10/reports")
 
 
 def _write_report(checked: int, mismatch: int) -> None:
-    """一致性校验的结论落盘;失败也写,验收页要能看见「上次导出没过」而不是一片空白。"""
+    """一致性校验的结论落盘;失败也写,页要能看见「上次导出没过」而不是一片空白。"""
     onnx_path = OUT / "model.onnx"
     REPORTS.mkdir(parents=True, exist_ok=True)
     (REPORTS / "export_report.json").write_text(json.dumps({

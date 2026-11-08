@@ -1,6 +1,6 @@
-"""物流 MCP Server(ch08 自建,mock 数据,不接真实系统、不建表)。
+"""物流 MCP Server(自建,mock 数据,不接真实系统、不建表)。
 独立进程:uv run python mcp_servers/logistics_server.py
-验收 6:MOCK_DELAY_SECONDS=12 起进程 → 每次工具调用慢 12 秒,客服侧看超时/重试/审计。
+ 6:MOCK_DELAY_SECONDS=12 起进程 → 每次工具调用慢 12 秒,客服侧看超时/重试/审计。
 实装 mcp==1.28.1:FastMCP(name, host=, port=) + run(transport="streamable-http"),路径默认 /mcp。"""
 import asyncio
 import os
@@ -23,7 +23,7 @@ async def query_logistics(
     tracking_no: Annotated[str, Field(description="物流单号(形如 SF 开头),需先用 query_order 查订单拿到该单号")],
 ) -> dict:
     """用物流单号(tracking_no)查询物流状态、当前位置和轨迹。用于用户询问物流/快递到哪了时。
-    物流单号不是订单号,需先用 query_order 查订单拿到 tracking_no,再调用本工具。"""
+ 物流单号不是订单号,需先用 query_order 查订单拿到 tracking_no,再调用本工具。"""
     if _DELAY > 0:
         await asyncio.sleep(_DELAY)
     rng = random.Random(f"logistics:{tracking_no}")      # 种子固定 → 同单号稳定

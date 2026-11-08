@@ -1,7 +1,7 @@
-"""ch10 旁路批处理:低置信度问题攒够一批,整批喂分类器归一次类,结果写 topic_classifications。
+"""旁路批处理:低置信度问题攒够一批,整批喂分类器归一次类,结果写 topic_classifications。
 实时对话主链路不调它。运行:make classify-pool(需 mysql + 分类器服务 :8110)。
 幂等:已归类的行(LEFT JOIN 命中)不重复归。定时跑 cron 示例:
-  0 3 * * * cd /path/to/mewhelp && make classify-pool >> log/classify-pool.log 2>&1"""
+ 0 3 * * * cd /path/to/mewhelp && make classify-pool >> log/classify-pool.log 2>&1"""
 import argparse
 import asyncio
 import datetime as dt
@@ -17,7 +17,7 @@ REPORTS = pathlib.Path("data/ch10/reports")
 
 
 def _write_report(status: str, pending: int, written: int, counts: dict) -> None:
-    """每次跑批留一份结论给验收页(/acceptance):第二遍 status=empty 就是幂等的实证。"""
+    """每次跑批留一份结论给页(/acceptance):第二遍 status=empty 就是幂等的实证。"""
     REPORTS.mkdir(parents=True, exist_ok=True)
     (REPORTS / "classify_run.json").write_text(json.dumps({
         "ran_at": dt.datetime.now().isoformat(timespec="seconds"),

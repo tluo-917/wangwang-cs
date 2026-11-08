@@ -1,10 +1,10 @@
 """知识库录入 API:把建库这条链搬上页面——材料清单、切块预览、录入入库、向量化、检索自测。
 
 两条录入路径,边界分清:
-  1. 手工录入(POST /preview → /ingest):正文在浏览器里贴,预览什么样就入库什么样。
-     切块用的是 app.kb.documents.build_chunks,与离线 CLI 同一个函数,不在接口里另写一套。
-  2. 离线建库(作业按钮):data/kb/*.md 四份材料走 make kb-build / kb-mine / kb-vectorize,
-     配方是仓库里那一份,页面按的与终端敲的是同一条命令。
+ 1. 手工录入(POST /preview → /ingest):正文在浏览器里贴,预览什么样就入库什么样。
+ 切块用的是 app.kb.documents.build_chunks,与离线 CLI 同一个函数,不在接口里另写一套。
+ 2. 离线建库(作业按钮):data/kb/*.md 四份材料走 make kb-build / kb-mine / kb-vectorize,
+ 配方是仓库里那一份,页面按的与终端敲的是同一条命令。
 
 查重按「问法 + 正文」的指纹,不是只按问法:表格按行拆、超长散文递归切,同一节切出的多块
 共用节标题,只按问法查会把它们当重复误杀。同一份正文重复录入则天然幂等——指纹全撞,全跳过。
@@ -51,7 +51,7 @@ def _chunk_view(seq: int, c: documents.Chunk, dup: bool | None) -> dict:
 
 def _features(chunks: list[documents.Chunk]) -> dict:
     """把三个切块特性有没有触发直接标出来:按标题层级切 / 表格按行拆 / 句末重叠。
-    一节被切成多块才谈得上重叠或拆表——按 section_path 分组数就能看出来。"""
+ 一节被切成多块才谈得上重叠或拆表——按 section_path 分组数就能看出来。"""
     groups: dict[str, list[documents.Chunk]] = {}
     for c in chunks:
         groups.setdefault(c.section_path, []).append(c)
@@ -199,8 +199,8 @@ class IngestIn(BaseModel):
 async def ingest(body: IngestIn) -> dict:
     """录入:切块 → 按指纹查重 → 写 MySQL(pending)→ 可选立刻向量化。
 
-    先写 MySQL 再进 Milvus 这个顺序不能反:MySQL 是原文权威源,先落地再向量化,
-    中间挂了重跑捡 pending 就能补齐。"""
+ 先写 MySQL 再进 Milvus 这个顺序不能反:MySQL 是原文权威源,先落地再向量化,
+ 中间挂了重跑捡 pending 就能补齐。"""
     text, ctype, _ = _resolve_preview(PreviewIn(text=body.text, content_type=body.content_type))
     chunks = documents.build_chunks(text, content_type=ctype)
     if not chunks:
@@ -237,7 +237,7 @@ async def ingest(body: IngestIn) -> dict:
 @router.post("/vectorize")
 async def vectorize() -> dict:
     """把库里所有 pending 块补齐向量(幂等可重跑)。故意中断建库再按这里,漏的块会被捡起来。
-    与 make kb-vectorize 调的是同一个 dualwrite.vectorize_pending,不存在两套逻辑。"""
+ 与 make kb-vectorize 调的是同一个 dualwrite.vectorize_pending,不存在两套逻辑。"""
     try:
         n = await dualwrite.vectorize_pending()
     except Exception as e:
@@ -248,14 +248,14 @@ async def vectorize() -> dict:
 
 class SearchIn(BaseModel):
     q: str
-    strategy: str = "vector"        # 本章只跑 dense 单路;bm25/hybrid 是 ch04 的事
+    strategy: str = "vector"        # 只跑 dense 单路;bm25/hybrid 是 的事
     top_k: int = Field(default=5, ge=1, le=20)
 
 
 @router.post("/search")
 async def search(body: SearchIn) -> dict:
     """检索自测:换个说法问一句,看召回的是不是该召回的那块。
-    「邮费是多少」召回运费说明,靠的是语义相近而不是词面命中——这一条在页面上现场看得见。"""
+ 「邮费是多少」召回运费说明,靠的是语义相近而不是词面命中——这一条在页面上现场看得见。"""
     q = body.q.strip()
     if not q:
         raise HTTPException(status_code=400, detail="问一句话再检索")
@@ -295,11 +295,11 @@ class StagingReviewIn(BaseModel):
 async def staging_approve(body: StagingReviewIn) -> dict:
     """人工采纳:选中的暂存行写进 knowledge_chunks 并向量化,成功才置 approved。
 
-    这是挖知识唯一的入库口。kb-mine 自己不写库——模型从聊天记录里归纳出来的问答对,
-    质量参差(只对单笔订单成立、夹带订单号、把「稍等我看看」当答案),得人过一眼。
+ 这是挖知识唯一的入库口。kb-mine 自己不写库——模型从聊天记录里归纳出来的问答对,
+ 质量参差(只对单笔订单成立、夹带订单号、把「稍等我看看」当答案),得人过一眼。
 
-    只认 status='kept' 的行:重复点、或者拿已弃用的行来入库,都在这一步被挡掉。
-    向量化失败要把刚插入的 pending 行删掉再报错,不然重试会造出重复知识(同 review.py)。"""
+ 只认 status='kept' 的行:重复点、或者拿已弃用的行来入库,都在这一步被挡掉。
+ 向量化失败要把刚插入的 pending 行删掉再报错,不然重试会造出重复知识(同 review.py)。"""
     rows = await repository.list_staging_by_ids(body.ids, status="kept")
     if not rows:
         raise HTTPException(status_code=409, detail="这些行不在待审状态(可能已被处理过)")

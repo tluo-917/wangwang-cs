@@ -7,7 +7,7 @@ _CLIENT: AsyncOpenAI | None = None
 
 def _client() -> AsyncOpenAI:
     """直连嵌入上游(硅基流动的 bge-m3,OpenAI 兼容)。
-    进程内单例:复用同一 httpx 连接池,避免每次 embed 新建客户端累积连接/fd。"""
+ 进程内单例:复用同一 httpx 连接池,避免每次 embed 新建客户端累积连接/fd。"""
     global _CLIENT
     if _CLIENT is None:
         _CLIENT = AsyncOpenAI(base_url=settings.embed_base_url, api_key=settings.embed_api_key)

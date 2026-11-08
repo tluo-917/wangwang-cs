@@ -1,4 +1,4 @@
-"""ch09 观测挂载:缺配置不挂回调、不碰 langfuse;齐配置才 with_config。"""
+"""观测挂载:缺配置不挂回调、不碰 langfuse;齐配置才 with_config。"""
 from app.core import observability
 
 

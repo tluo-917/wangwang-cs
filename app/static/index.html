@@ -537,7 +537,7 @@
     </div><!-- /.main -->
   </div>
 
-  <!-- ch05:建工单表单弹窗(点「建工单」弹出,选类别+填描述再提交) -->
+  <!-- 建工单表单弹窗(点「建工单」弹出,选类别+填描述再提交) -->
   <div class="modal-mask" id="ticketMask">
     <div class="ticket-modal" role="dialog" aria-modal="true" aria-labelledby="ticketTitle">
       <h3 id="ticketTitle">创建工单</h3>
@@ -779,7 +779,7 @@
       return out.join("");
     }
 
-    // ---------- ch04:引用角标 [n] → 可点,弹来源浮层(section_path + 原文) ----------
+    // ---------- 引用角标 [n] → 可点,弹来源浮层(section_path + 原文) ----------
     let citePop = null;
     function ensureCitePop() {
       if (citePop) return citePop;
@@ -848,7 +848,7 @@
       }
     }
 
-    // ---------- ch04:每段回答满意度反馈(👍/👎,点一次点亮 + 已反馈,一次性)----------
+    // ---------- 每段回答满意度反馈(👍/👎,点一次点亮 + 已反馈,一次性)----------
     function addFeedbackBar(bubble) {
       if (bubble.querySelector(".feedback")) return;   // 防重复挂
       const bar = document.createElement("div");
@@ -862,7 +862,7 @@
       const done = document.createElement("span");
       done.className = "fb-done"; done.hidden = true; done.textContent = "已反馈,谢谢~";
       bar.append(up, down, done);
-      // ch09:向上找这条回答之前最近的用户气泡,把该轮用户原话带给后端(👎 落池要用)
+      // 向上找这条回答之前最近的用户气泡,把该轮用户原话带给后端(👎 落池要用)
       function userQuestionBefore() {
         let row = bubble.closest(".row");
         while (row && (row = row.previousElementSibling)) {
@@ -880,7 +880,7 @@
         other.classList.add("dim");      // 另一个淡出
         up.disabled = true; down.disabled = true;
         done.hidden = false;             // 显示"已反馈"
-        // ch09:反馈接后端——👎 落低置信度问题池进飞轮,👍 后端只记日志;失败静默,UI 行为不变
+        // 反馈接后端——👎 落低置信度问题池进飞轮,👍 后端只记日志;失败静默,UI 行为不变
         fetch("/api/feedback", {
           method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ conversation_id: getConversationId(),
@@ -893,13 +893,13 @@
       bubble.appendChild(bar);
     }
 
-    // ---------- ch05:actions 帧 - 转人工/建工单两按钮交互 ----------
+    // ---------- actions 帧 - 转人工/建工单两按钮交互 ----------
     function renderActions(bubble, items) {
       const bar = document.createElement("div");
       bar.className = "action-bar";
       for (const a of items) {
         if (a.type === "select_order") {
-          // ch08:报了不属于自己的订单号被拒,把他名下的单列出来点选。拒绝之后得给条出路,
+          // 报了不属于自己的订单号被拒,把他名下的单列出来点选。拒绝之后得给条出路,
           // 否则用户既查不到,也不知道自己的单号是多少
           renderOrderCards(bubble, a.orders || [], pickThenAsk);
           continue;
@@ -911,7 +911,7 @@
           btn.textContent = "转人工";
           btn.addEventListener("click", () => {
             btn.disabled = true;
-            // 纯前端模拟:显示已转接 + 客服小汪问候(本章不接真人系统)
+            // 纯前端模拟:显示已转接 + 客服小汪问候(不接真人系统)
             const sys = addRow("bot"); sys.textContent = "已转接人工客服";
             const greet = addRow("bot");
             greet.textContent = "您好,我是客服小汪,请问有什么可以帮您的";
@@ -923,7 +923,7 @@
           btn.addEventListener("click", () => openTicketModal(btn));
         } else if (a.type === "refund_form") {
           btn.textContent = "提交退款工单";
-          // ch06:能退时 Agent 调 submit_refund 被拦成此动作,点开退款表单(订单号只读+原因下拉)
+          // 能退时 Agent 调 submit_refund 被拦成此动作,点开退款表单(订单号只读+原因下拉)
           btn.addEventListener("click", () => openRefundModal(btn, a.draft || {}));
         }
         bar.appendChild(btn);
@@ -931,7 +931,7 @@
       if (bar.children.length) bubble.appendChild(bar);   // 只有订单卡时不留一条空按钮栏
     }
 
-    // ---------- ch05:建工单表单弹窗控制 ----------
+    // ---------- 建工单表单弹窗控制 ----------
     const ticketMask = document.getElementById("ticketMask");
     const ticketType = document.getElementById("ticketType");
     const ticketDesc = document.getElementById("ticketDesc");
@@ -997,7 +997,7 @@
       }
     });
 
-    // ---------- ch06:退款表单弹窗控制(订单号只读 + 固定类目原因下拉)----------
+    // ---------- 退款表单弹窗控制(订单号只读 + 固定类目原因下拉)----------
     const refundMask = document.getElementById("refundMask");
     const refundOrder = document.getElementById("refundOrder");
     const refundReason = document.getElementById("refundReason");
@@ -1051,8 +1051,8 @@
       }
     });
 
-    // ---------- ch06:订单选择器卡片(interrupt 缺订单号 → 聊天流点选 → resume 续跑)----------
-    // onPick 决定点完卡片干什么:ch06 是 resume 把图续跑下去;ch08 归属校验拒绝之后
+    // ---------- 订单选择器卡片(interrupt 缺订单号 → 聊天流点选 → resume 续跑)----------
+    // onPick 决定点完卡片干什么:是 resume 把图续跑下去;归属校验拒绝之后
     // 没有待续跑的图,点了就当用户重新问一句(见 pickThenAsk)。卡片长相只此一份。
     function renderOrderCards(bubble, orders, onPick) {
       const intro = document.createElement("div");
@@ -1080,7 +1080,7 @@
       messagesEl.scrollTop = messagesEl.scrollHeight;
     }
 
-    // ch06:点完续跑图(有 interrupt 挂着)
+    // 点完续跑图(有 interrupt 挂着)
     async function pickThenResume(o) {
       addRow("user").textContent = "选择订单 " + o.order_id;
       const nb = addRow("bot");
@@ -1098,12 +1098,12 @@
       }
     }
 
-    // ch08:归属校验拒绝之后给的出路。这轮已经答完了,没有图等着续跑,所以走正常发消息那条路
+    // 归属校验拒绝之后给的出路。这轮已经答完了,没有图等着续跑,所以走正常发消息那条路
     async function pickThenAsk(o) {
       await send("查一下订单 " + o.order_id);
     }
 
-    // ---------- ch08:工单预览确认卡(interrupt confirm_ticket → 确认提交/取消 → resume 续跑)----------
+    // ---------- 工单预览确认卡(interrupt confirm_ticket → 确认提交/取消 → resume 续跑)----------
     function renderTicketConfirm(bubble, preview) {
       const intro = document.createElement("div");
       intro.className = "bubble-text";
@@ -1222,7 +1222,7 @@
         interrupt: (data) => {
           interrupted = true;
           if (!structured) { bubble.innerHTML = ""; structured = true; }
-          // ch08:中断按 kind 分发——select_order 弹订单卡,confirm_ticket 弹工单预览卡
+          // 中断按 kind 分发——select_order 弹订单卡,confirm_ticket 弹工单预览卡
           if (data.kind === "confirm_ticket") renderTicketConfirm(bubble, data.preview || {});
           else renderOrderCards(bubble, data.orders || []);
         },
@@ -1252,11 +1252,11 @@
         bubble.textContent = "回复失败,请稍后重试";
       } finally {
         setBusy(false);
-        loadConversations();   // ch07:每轮后刷新侧栏(新会话入列/摘要标记更新)
+        loadConversations();   // 每轮后刷新侧栏(新会话入列/摘要标记更新)
       }
     }
 
-    // ---------- ch07:会话侧栏(列表 / 切换 / 历史回载) ----------
+    // ---------- 会话侧栏(列表 / 切换 / 历史回载) ----------
     const convListEl = document.getElementById("conv-list");
 
     async function loadConversations() {
@@ -1354,7 +1354,7 @@
 
     getUserId();
     renderEmptyState();
-    loadConversations();              // ch07:进页面先拉会话列表
+    loadConversations();              // 进页面先拉会话列表
     inputEl.focus();
   </script>
 </body>

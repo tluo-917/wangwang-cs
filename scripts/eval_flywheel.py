@@ -1,7 +1,7 @@
-"""ch09 自动化评估流水线:复用 ch04 评估集与指标,定期跑、落 eval_runs、连趋势。
+"""自动化评估流水线:复用 评估集与指标,定期跑、落 eval_runs、连趋势。
 指标:检索段 Recall@5 / MRR(hybrid_rerank,可答桶,跨文档题按组凑齐算),生成段 Faithfulness + D 桶拒答率。
 运行:make eval-flywheel(TRIGGER=手动|定时,默认手动)。cron 示例:
-  0 6 * * * cd /path/to/mewhelp && make eval-flywheel TRIGGER=定时 >> log/eval.log 2>&1
+ 0 6 * * * cd /path/to/mewhelp && make eval-flywheel TRIGGER=定时 >> log/eval.log 2>&1
 趋势:读最近 10 轮,对比上一轮涨跌;任何指标下滑标 ⚠——README:「重点全在这条趋势线上」。
 产物:data/ch09/reports/eval_trend.txt(趋势本身的权威源是 eval_runs 表,
 「观测与成本」页直接读表,不读这份文本,免得同一条趋势有两个出处)。
@@ -69,7 +69,7 @@ async def run_once() -> dict:
     absent = [s for s in samples if s["bucket"] == "D_absent"]
 
     hits_list = await asyncio.gather(*(_retrieve("hybrid_rerank", s) for s in graded))
-    # 口径跟 ch04 完全一致:跨文档题按组算,凑齐才算召回到(直接复用那边的函数)
+    # 口径跟 完全一致:跨文档题按组算,凑齐才算召回到(直接复用那边的函数)
     ranks = [_ranks_per_group(h, s) for s, h in zip(graded, hits_list)]
     recall = _mean([_recall_at(r, RECALL_K) for r in ranks])
     mrr = _mean([_rr(r) for r in ranks])
@@ -93,9 +93,9 @@ async def run_once() -> dict:
 async def _trend_note(runs) -> None:
     """趋势的读图小注另存一份,并写上它描述的那一轮 id。
 
-    表才是趋势的权威源,注只能是旁挂的一份;不把 id 记下来,下一轮跑完但注没生成
-    (上游不稳)时,页面就会拿上一轮的话去解释这一轮的数。
-    """
+ 表才是趋势的权威源,注只能是旁挂的一份;不把 id 记下来,下一轮跑完但注没生成
+ (上游不稳)时,页面就会拿上一轮的话去解释这一轮的数。
+ """
     latest = runs[0]
     prev = runs[1] if len(runs) > 1 else None
     lm, pm = latest.metrics or {}, (prev.metrics or {}) if prev else {}

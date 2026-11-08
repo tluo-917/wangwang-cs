@@ -30,7 +30,7 @@ def _split_sentences(text: str) -> list[str]:
 
 def _trailing_sentences(text: str, max_chars: int) -> str:
     """取 text 结尾若干**完整句**作为重叠,总长尽量不超过 max_chars;
-    单句超长则整句保留(优先「不留半截话」)。"""
+ 单句超长则整句保留(优先「不留半截话」)。"""
     out: list[str] = []
     total = 0
     for s in reversed(_split_sentences(text)):
@@ -56,7 +56,7 @@ _TABLE_SEP_RE = re.compile(r"^\s*\|?[\s:|-]+\|?\s*$")
 
 def _find_table_header(lines: list[str]) -> int:
     """返回表头行下标(其后紧跟 --- 分隔行);无表格返回 -1。
-    允许表格前有若干散文行(不再要求首行即表头)。"""
+ 允许表格前有若干散文行(不再要求首行即表头)。"""
     for i in range(len(lines) - 1):
         if (lines[i].lstrip().startswith("|")
                 and _TABLE_SEP_RE.match(lines[i + 1]) and "-" in lines[i + 1]):
@@ -71,7 +71,7 @@ def is_table_block(text: str) -> bool:
 
 def split_table_rows(table_md: str, max_rows: int) -> list[str]:
     """大表格按行切,每块重贴表头行 + 分隔行;不超 max_rows 数据行则整块返回。
-    表头前的散文行作为前言,保留在首块(不丢),后续块只带表头。"""
+ 表头前的散文行作为前言,保留在首块(不丢),后续块只带表头。"""
     lines = [ln for ln in table_md.strip().splitlines() if ln.strip()]
     idx = _find_table_header(lines)
     if idx == -1:

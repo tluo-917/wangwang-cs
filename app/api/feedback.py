@@ -1,4 +1,4 @@
-"""ch09 飞轮入口3:用户反馈没解决。👎 落 low_confidence_questions(source=user_feedback),
+"""飞轮入口3:用户反馈没解决。👎 落 low_confidence_questions(source=user_feedback),
 快照尽力回捞(checkpointer 里最近一轮的 retrieved_snapshot,问题对得上才用);👍 只记日志。"""
 import logging
 

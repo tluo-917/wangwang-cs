@@ -1,4 +1,4 @@
-"""ch07 上下文拼装(纯函数级):拼装顺序固定、滑窗从摘要边界后接原文、无摘要不插额外 system。"""
+"""上下文拼装(纯函数级):拼装顺序固定、滑窗从摘要边界后接原文、无摘要不插额外 system。"""
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
 from app.graph.nodes import _agent_messages, _history_text
@@ -17,9 +17,9 @@ def _state(n_turns=3, summary="", upto=0):
 def test_agent_messages_order_with_summary():
     """拼装顺序固定:人设 system 打头 → 滑窗原文 → 摘要与本轮材料紧跟最后一条用户消息。
 
-    摘要不再单独占一条 system:上游模板会把所有 system 上提合并,摘要每会话不同,
-    放 system 里会把工具 schema 挤到可变内容之后,前缀缓存整段作废(实测 2048→0)。
-    """
+ 摘要不再单独占一条 system:上游模板会把所有 system 上提合并,摘要每会话不同,
+ 放 system 里会把工具 schema 挤到可变内容之后,前缀缓存整段作废(实测 2048→0)。
+ """
     ms = _agent_messages(_state(summary="用户问过订单1001", upto=0))
     assert isinstance(ms[0], SystemMessage) and "小汪" in ms[0].content   # 人设红线打头
     assert sum(isinstance(m, SystemMessage) for m in ms) == 1            # 全列表只此一条
@@ -80,11 +80,11 @@ def _layered_state(layer1_from: int):
 def test_层1锚点必须真的传进渲染_否则三层跑成两层():
     """`build_window` 支持三层,但节点不传第三个参数的话它会静默退化成两层。
 
-    这条钉的是「接线」不是「函数」:build_window 自己的三层行为在 test_layers.py 里
-    测过了,漏的是 _agent_messages 有没有把 State 里的 layer1_from_msg_id 递给它。
-    参数有默认值 0,不传不报错、日志照打、锚点照落库,只是层 2 那一刀永远不切——
-    跑起来还是两层,而且从外面一点看不出来。
-    """
+ 这条钉的是「接线」不是「函数」:build_window 自己的三层行为在 test_layers.py 里
+ 测过了,漏的是 _agent_messages 有没有把 State 里的 layer1_from_msg_id 递给它。
+ 参数有默认值 0,不传不报错、日志照打、锚点照落库,只是层 2 那一刀永远不切——
+ 跑起来还是两层,而且从外面一点看不出来。
+ """
     ms = _agent_messages(_layered_state(layer1_from=3))
     replies = [m.content for m in ms if isinstance(m, AIMessage)]
     assert len(replies) == 3

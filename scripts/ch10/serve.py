@@ -1,4 +1,4 @@
-"""ch10 推理服务:ONNX + FastAPI 独立进程 :8110,轻运行时(onnxruntime + tokenizers,不背 torch)。
+"""推理服务:ONNX + FastAPI 独立进程 :8110,轻运行时(onnxruntime + tokenizers,不背 torch)。
 起停:make classifier-up / classifier-down(仓库惯例 nohup + pid 文件)。"""
 import json
 import pathlib

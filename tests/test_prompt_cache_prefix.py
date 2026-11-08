@@ -44,10 +44,10 @@ def test_system_prefix_identical_across_routes():
 def test_exactly_one_system_message(name, state):
     """整条列表只许有一条 SystemMessage。
 
-    上游 chat template 会把所有 system 上提合并成一个头部块渲染,多出来的任何一条
-    (比如曾经单独占位的摘要)都会拼在 AGENT_SYSTEM 后面,把工具 schema 挤到可变内容
-    之后。实测:摘要一进 system,cache_read 从 2048 掉到 0。
-    """
+ 上游 chat template 会把所有 system 上提合并成一个头部块渲染,多出来的任何一条
+ (比如曾经单独占位的摘要)都会拼在 AGENT_SYSTEM 后面,把工具 schema 挤到可变内容
+ 之后。实测:摘要一进 system,cache_read 从 2048 掉到 0。
+ """
     assert sum(isinstance(m, SystemMessage) for m in _agent_messages(state)) == 1
 
 
@@ -63,8 +63,8 @@ def test_volatile_payload_never_lands_in_any_system_message(name, state):
 def test_step1_prompt_is_strict_prefix_of_step2():
     """ReAct 第 1 步的整段 prompt 必须是第 2 步的严格前缀,轮内才命中。
 
-    这条同时锁死了插入位置:谁把本轮材料改成追加到列表末尾、或塞到滑窗前面,这里立刻红。
-    """
+ 这条同时锁死了插入位置:谁把本轮材料改成追加到列表末尾、或塞到滑窗前面,这里立刻红。
+ """
     base = {"route": "refund_flow", "evidence": EVIDENCE, "order_data": ORDER}
     q = HumanMessage("这单能退吗", id="db-1")
     step1 = _agent_messages({**base, "messages": [q]})

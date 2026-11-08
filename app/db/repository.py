@@ -89,13 +89,13 @@ async def create_ticket(conversation_id: int, description: str, ticket_type: str
     return ticket_no
 
 
-# ---- ch07 会话上下文管理(滑窗 + 异步摘要)----
+# ---- 会话上下文管理(滑窗 + 异步摘要)----
 
 
 async def count_messages_after(conversation_id: int, after_id: int | None) -> int:
     """距上次摘要新增了多少条(after_id 空 = 从未摘要,数全量)。摘要触发判据。
-    注:此处数全角色,摘要源 list_dialog_messages 只取 user/assistant——当前一致
-    (tool 不落库);若未来 tool 行落库,两处口径需同步收紧。"""
+ 注:此处数全角色,摘要源 list_dialog_messages 只取 user/assistant——当前一致
+ (tool 不落库);若未来 tool 行落库,两处口径需同步收紧。"""
     async with db.async_session() as s:
         q = (select(func.count()).select_from(Message)
              .where(Message.conversation_id == conversation_id))
@@ -162,8 +162,8 @@ async def append_summary_segment(conversation_id: int, from_msg_id: int,
                                  upto_msg_id: int, content: str) -> int:
     """追加一段摘要,同时把 conversations 的边界和拼好的投影一起更新。
 
-    段落只追加不改写:已有的段不会再进模型,里面的订单号这类事实压过一次就定死了。
-    conversations.summary 存的是最近若干段拼好的结果,读的时候少一次查询。"""
+ 段落只追加不改写:已有的段不会再进模型,里面的订单号这类事实压过一次就定死了。
+ conversations.summary 存的是最近若干段拼好的结果,读的时候少一次查询。"""
     async with db.async_session() as s:
         # 先把已有的几段读出来再 add:反过来的话 autoflush 会把新段也算进这次查询,
         # 拼投影时它就出现两次。
@@ -198,7 +198,7 @@ async def list_summary_segments(conversation_id: int, limit: int | None = None) 
         return list(reversed(rows))
 
 
-# ---- ch03 知识库 chunk / 暂存表 ----
+# ---- 知识库 chunk / 暂存表 ----
 
 
 async def insert_knowledge_chunk(
@@ -247,7 +247,7 @@ async def set_chunk_neighbors(chunk_id: int, prev_id: int | None, next_id: int |
 
 async def list_chunks_by_content_types(content_types) -> list[KnowledgeChunk]:
     """按 content_type 取块(文档类建库材料)。飞轮写回的块 content_type 不在这几类里,
-    所以按这个条件取到的就是「来自 data/kb/*.md 的那部分」,补库改文件时只动它们。"""
+ 所以按这个条件取到的就是「来自 data/kb/*.md 的那部分」,补库改文件时只动它们。"""
     async with db.async_session() as s:
         result = await s.execute(
             select(KnowledgeChunk)
@@ -260,9 +260,9 @@ async def list_chunks_by_content_types(content_types) -> list[KnowledgeChunk]:
 async def repend_chunk_text(chunk_id: int, questions: str, answer: str) -> None:
     """改写一块的正文并退回 pending,等 vectorize_pending 重嵌。
 
-    为什么不是「删掉重插」:Milvus 那边 upsert 的主键就是这个 id,原地重嵌等于原地更新,
-    引用角标、prev/next 邻居指针、飞轮写回的块都不受影响。整库重建(kb-reset)会连飞轮
-    审核通过写回的那些块一起清掉,补库这种小改动犯不上。"""
+ 为什么不是「删掉重插」:Milvus 那边 upsert 的主键就是这个 id,原地重嵌等于原地更新,
+ 引用角标、prev/next 邻居指针、飞轮写回的块都不受影响。整库重建(kb-reset)会连飞轮
+ 审核通过写回的那些块一起清掉,补库这种小改动犯不上。"""
     async with db.async_session() as s:
         row = await s.get(KnowledgeChunk, chunk_id)
         if row is not None:
@@ -298,7 +298,7 @@ async def count_chunks_by_content_types(content_types) -> int:
 
 async def knowledge_stats() -> dict:
     """知识库盘点:总块数 + 双写状态分布 + 内容类型分布 + 关键条款数。
-    录入页的库存概览一次拿齐,不必让页面发四五个请求各问一个数。"""
+ 录入页的库存概览一次拿齐,不必让页面发四五个请求各问一个数。"""
     async with db.async_session() as s:
         total = (await s.execute(select(func.count()).select_from(KnowledgeChunk))).scalar_one()
         by_status = {k: int(v) for k, v in (await s.execute(
@@ -325,8 +325,8 @@ async def list_recent_chunks(limit: int = 20) -> list[KnowledgeChunk]:
 
 async def list_chunk_pairs() -> list[tuple[str, str]]:
     """全表的 (questions, answer) 对,给录入查重算指纹。
-    只按问法查重会误杀同一节切出来的多块——表格按行拆、超长散文递归切,这些块共用节标题,
-    问法一模一样、正文各不相同,是该留的。"""
+ 只按问法查重会误杀同一节切出来的多块——表格按行拆、超长散文递归切,这些块共用节标题,
+ 问法一模一样、正文各不相同,是该留的。"""
     async with db.async_session() as s:
         result = await s.execute(select(KnowledgeChunk.questions, KnowledgeChunk.answer))
         return [(q, a) for q, a in result.all()]
@@ -334,7 +334,7 @@ async def list_chunk_pairs() -> list[tuple[str, str]]:
 
 async def staging_stats() -> dict:
     """抽 QA 暂存表盘点:三个状态各几条 + 批次数 + 最近批次号。
-    「先进暂存、整体去重再入库」这一步在页面上要看得见,靠的就是这三个状态的落差。"""
+ 「先进暂存、整体去重再入库」这一步在页面上要看得见,靠的就是这三个状态的落差。"""
     async with db.async_session() as s:
         counts = {k: int(v) for k, v in (await s.execute(
             select(QaExtractionStaging.status, func.count())
@@ -371,7 +371,7 @@ async def list_staging_by_status(status: str) -> list[QaExtractionStaging]:
 
 async def list_staging_by_ids(ids: list[int], status: str | None = None) -> list[QaExtractionStaging]:
     """按 id 取暂存行,可再限定状态。人工采纳/弃用时用它——限定 status='kept' 就能挡住
-    重复采纳(点两次只有第一次拿得到行)和拿已弃用的行来入库。"""
+ 重复采纳(点两次只有第一次拿得到行)和拿已弃用的行来入库。"""
     if not ids:
         return []
     async with db.async_session() as s:
@@ -424,7 +424,7 @@ async def list_conversations_with_messages() -> list[tuple[int, list[Message]]]:
         return out
 
 
-# ---- ch09 数据飞轮(待审队列 + 评估轮次)----
+# ---- 数据飞轮(待审队列 + 评估轮次)----
 
 
 async def fetch_unmatched_low_conf(limit: int) -> list[LowConfidenceQuestion]:
@@ -459,7 +459,7 @@ async def insert_review_item(normalized_question: str, ai_suggested_answer: str 
 
 async def increment_occurrence(review_id: int) -> None:
     """查重命中:只累加次数,状态不动(命中已驳回/已通过也一样——驳回即终审)。
-    原子 UPDATE,不走读改写,两批飞轮重叠时不丢计数。"""
+ 原子 UPDATE,不走读改写,两批飞轮重叠时不丢计数。"""
     async with db.async_session() as s:
         await s.execute(
             update(ReviewQueue)
@@ -540,7 +540,7 @@ async def list_eval_runs(limit: int = 10) -> list[EvalRun]:
         return list(result.scalars())
 
 
-# ---- ch08 工具审计 ----
+# ---- 工具审计 ----
 
 
 async def insert_tool_audit(
@@ -567,7 +567,7 @@ async def insert_tool_audit(
         await s.commit()
 
 
-# ---------- ch10 主题分类 ----------
+# ---------- 主题分类 ----------
 
 def _pool_text_stmt():
     """池问题取文本的公共查询:优先归并后的标准化问法,没归并退回原话。"""
@@ -580,16 +580,16 @@ def _pool_text_stmt():
 
 
 async def list_pool_texts() -> list[dict]:
-    """ch10 训练语料捞取:全量低置信度问题。"""
+    """训练语料捞取:全量低置信度问题。"""
     async with db.async_session() as s:
         rows = (await s.execute(_pool_text_stmt())).all()
     return [{"question_id": qid, "text": norm or raw} for qid, raw, norm in rows]
 
 
 async def list_unclassified_questions(limit: int = 500) -> list[dict]:
-    """ch10 旁路批处理捞取:尚未归类、且已归并的低置信度问题。
-    分类器只吃归并阶段产出的标准化问法;未归并(无 matched_review_id)的
-    不进分类,留到下一轮归并后再归——保证输入永远是语义完整的单句,不喂原话。"""
+    """旁路批处理捞取:尚未归类、且已归并的低置信度问题。
+ 分类器只吃归并阶段产出的标准化问法;未归并(无 matched_review_id)的
+ 不进分类,留到下一轮归并后再归——保证输入永远是语义完整的单句,不喂原话。"""
     stmt = (
         _pool_text_stmt()
         .outerjoin(TopicClassification,
@@ -648,9 +648,9 @@ async def topic_distribution(samples_per_class: int = 3) -> dict:
 async def topic_questions(label: str, page: int = 1, size: int = 20) -> dict:
     """某一类目下已归类的问题,分页。总数与分布页那张图同源,都是数 labels 命中。
 
-    labels 是 JSON 数组,筛选与分页都在 Python 侧做:归类总量是问题池规模(百级),
-    一次全捞不贵,换来的是不依赖 MySQL 的 JSON 函数,sqlite 上跑测试也一致。
-    """
+ labels 是 JSON 数组,筛选与分页都在 Python 侧做:归类总量是问题池规模(百级),
+ 一次全捞不贵,换来的是不依赖 MySQL 的 JSON 函数,sqlite 上跑测试也一致。
+ """
     stmt = (
         select(TopicClassification.question_id, TopicClassification.labels,
                TopicClassification.classified_at, LowConfidenceQuestion.raw_question,
@@ -684,7 +684,7 @@ async def topic_questions(label: str, page: int = 1, size: int = 20) -> dict:
             "pages": pages, "items": items}
 
 
-# ---- ch04 编造个案台账 ----
+# ---- 编造个案台账 ----
 
 
 async def upsert_faith_case(eval_id: str, bucket: str, query: str, answer: str, reason: str,
@@ -692,10 +692,10 @@ async def upsert_faith_case(eval_id: str, bucket: str, query: str, answer: str, 
                             judge_model: str | None = None) -> tuple[int, bool]:
     """一题一行:已有就更新成最近一次并 seen_count+1,返回 (id, 是否复发)。
 
-    复发 = 这条之前被标过「已解决 / 无需解决」,现在又被判编造。那不是新问题,而是上次
-    没改对(或者改动被回退),所以状态退回「未解决」重新进待处理列表——resolved_at 留着,
-    列表上据此打「复发」标。
-    """
+ 复发 = 这条之前被标过「已解决 / 无需解决」,现在又被判编造。那不是新问题,而是上次
+ 没改对(或者改动被回退),所以状态退回「未解决」重新进待处理列表——resolved_at 留着,
+ 列表上据此打「复发」标。
+ """
     async with db.async_session() as s:
         row = (await s.execute(
             select(FaithCase).where(FaithCase.eval_id == eval_id))).scalar_one_or_none()
@@ -742,7 +742,7 @@ async def list_faith_cases(status: str | None = None, page: int = 1,
 
 async def faith_case_status_map() -> dict[str, str]:
     """eval_id → 处置状态。给幻觉率算「本轮」用:报告只给这一轮判出了哪几题,
-    每题现在是什么处置得回台账查——台账是跨轮累计的,不能直接拿它的总数当本轮判出。"""
+ 每题现在是什么处置得回台账查——台账是跨轮累计的,不能直接拿它的总数当本轮判出。"""
     async with db.async_session() as s:
         rows = (await s.execute(select(FaithCase.eval_id, FaithCase.status))).all()
         return {eid: st for eid, st in rows}
@@ -752,10 +752,10 @@ async def set_faith_case_status(case_id: int, status: str,
                                 resolution: str | None = None) -> FaithCase | None:
     """人工处置:已解决 / 无需解决 / 退回未解决。
 
-    处置要留交代:标「已解决」得写清怎么解决的,标「无需解决」得写清为什么不用改——
-    半年后回头看,一个没写理由的「无需解决」和没处理过没区别。校验在 API 层(能回 400),
-    这里只负责落库:退回未解决时连 resolved_at 和说明一起清掉。
-    """
+ 处置要留交代:标「已解决」得写清怎么解决的,标「无需解决」得写清为什么不用改——
+ 半年后回头看,一个没写理由的「无需解决」和没处理过没区别。校验在 API 层(能回 400),
+ 这里只负责落库:退回未解决时连 resolved_at 和说明一起清掉。
+ """
     async with db.async_session() as s:
         row = await s.get(FaithCase, case_id)
         if row is None:

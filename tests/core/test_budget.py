@@ -48,10 +48,10 @@ def test_evidence_scales_with_rerank_top_k():
 def test_per_turn_是历史稳态_不是瞬时峰值():
     """峰值和稳态是两个数,合成一个必有一边错。
 
-    峰值管「这一轮跑得起来吗」:6 步的 AI 消息和工具结果同时挂在消息列表里。
-    稳态管「多少轮不被裁掉」:旧轮的工具结果早被 compress_tool_result 压成一行了。
-    拿峰值去乘轮数,等于给一个系统自己承诺不会出现的状态留位置。
-    """
+ 峰值管「这一轮跑得起来吗」:6 步的 AI 消息和工具结果同时挂在消息列表里。
+ 稳态管「多少轮不被裁掉」:旧轮的工具结果早被 compress_tool_result 压成一行了。
+ 拿峰值去乘轮数,等于给一个系统自己承诺不会出现的状态留位置。
+ """
     b = budget.compute(window=1_000_000)
     assert b.per_turn == (settings.max_user_input_tokens + settings.max_output_tokens
                           + settings.max_agent_steps * settings.layer2_tool_keep_tokens)

@@ -1,4 +1,4 @@
-"""后台首页聚合 API:知识库、RAG 评估、飞轮待审、观测与成本、主题分布、分类器验收各给一张卡。
+"""后台首页聚合 API:知识库、RAG 评估、飞轮待审、观测与成本、主题分布、分类器各给一张卡。
 
 各块依赖不同(mysql / Milvus / 嵌入与聊天上游 / :8110 分类器)。任何一块的依赖没起,
 只让它自己那张卡显示读数失败,不连坐整页——后台首页的用处正是在依赖不齐的时候
@@ -165,7 +165,7 @@ async def _topics_card() -> dict:
     card["metrics"] = [{"label": "已归类问题", "value": dist["total"]},
                        {"label": "命中类目", "value": f"{hit}/{len(dist['classes'])}"}]
     if not dist["total"]:
-        card["status"], card["headline"] = "missing", "还没归类过,去分类器验收页跑一次旁路批量归类"
+        card["status"], card["headline"] = "missing", "还没归类过,去分类器页跑一次旁路批量归类"
     else:
         card["status"] = "ok"
         card["headline"] = "占前三:" + "、".join(f"{c['label']} {c['count']}" for c in top)
@@ -173,8 +173,8 @@ async def _topics_card() -> dict:
 
 
 async def _classifier_card() -> dict:
-    """分类器验收:九项实证的闸门数直接取验收总览那一份,不在这里重算。"""
-    card = _card("classifier", "分类器验收", "/acceptance",
+    """分类器:九项实证的闸门数直接取总览那一份,不在这里重算。"""
+    card = _card("classifier", "分类器", "/acceptance",
                  "语料 → 微调 → 评测 → 导出 → 旁路归类,九项实证逐项过闸")
     try:
         ov = await acceptance.overview()

@@ -4,18 +4,18 @@
 滑窗只能用余下的部分。
 这里有两个容易混成一个的数,合起来必错:
 
-  峰值    turn_peak_tokens()    当前这一轮跑起来的瞬时占用。ReAct 最多走 max_agent_steps 步,
-                                每步的 AI 消息和工具结果都同时挂在消息列表里喂给下一步
-  稳态    history_per_turn()    这一轮沉淀进历史后的占用。层 1 边界挪过去以后,
-                                compress_tool_result 会把大块工具结果压成一行
+ 峰值 turn_peak_tokens() 当前这一轮跑起来的瞬时占用。ReAct 最多走 max_agent_steps 步,
+ 每步的 AI 消息和工具结果都同时挂在消息列表里喂给下一步
+ 稳态 history_per_turn() 这一轮沉淀进历史后的占用。层 1 边界挪过去以后,
+ compress_tool_result 会把大块工具结果压成一行
 
 启动自检问的是「这一轮跑得起来吗」,要用峰值;滑窗覆盖几轮问的是「多少轮不被裁掉」,
 要用稳态。拿峰值去乘轮数,等于给一个系统自己承诺不会出现的状态留位置。
 
 滑窗预算取两个数的小者:
 
-  轮数项  N * 稳态         想留住的轮数倒推
-  窗口项  W - 固定开销 - 峰值   窗口扣掉固定块和本轮峰值之后,实际匀得出来的
+ 轮数项 N * 稳态 想留住的轮数倒推
+ 窗口项 W - 固定开销 - 峰值 窗口扣掉固定块和本轮峰值之后,实际匀得出来的
 
 窗口大时轮数项生效,窗口小时窗口项收紧,连一轮都装不下就判为不健康。
 窗口大小按 chat_model 查表得到,配置里填了非 0 值则以配置为准。
@@ -94,9 +94,9 @@ def evidence_tokens(top_k: int | None = None) -> int:
 def turn_peak_tokens() -> int:
     """一轮 ReAct 的瞬时峰值,不含固定开销、不含历史。
 
-    最多走 max_agent_steps 步,每步留一条 AI(带 tool_call)和一条工具结果在消息列表里
-    喂给下一步,到本轮结束前都在窗口里。最后那条答复占的是 fixed 里那份输出预留——
-    模型调用是串行的,Y 只需要留一份,不乘步数。"""
+ 最多走 max_agent_steps 步,每步留一条 AI(带 tool_call)和一条工具结果在消息列表里
+ 喂给下一步,到本轮结束前都在窗口里。最后那条答复占的是 fixed 里那份输出预留——
+ 模型调用是串行的,Y 只需要留一份,不乘步数。"""
     return settings.max_user_input_tokens + settings.max_agent_steps * (
         settings.tool_result_max_tokens + settings.agent_step_ai_tokens)
 
@@ -104,8 +104,8 @@ def turn_peak_tokens() -> int:
 def history_per_turn() -> int:
     """历史里一轮的稳态占用。
 
-    工具结果不按原尺寸算:层 1 边界挪过去以后,compress_tool_result 把超过
-    layer2_tool_keep_tokens 的压成一行。按原尺寸算是给一个不会出现的状态留位置。"""
+ 工具结果不按原尺寸算:层 1 边界挪过去以后,compress_tool_result 把超过
+ layer2_tool_keep_tokens 的压成一行。按原尺寸算是给一个不会出现的状态留位置。"""
     return (settings.max_user_input_tokens + settings.max_output_tokens
             + settings.max_agent_steps * settings.layer2_tool_keep_tokens)
 

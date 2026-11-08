@@ -1,6 +1,6 @@
-"""ch09 审核后台 API:待审队列列表/详情/通过(写回知识库)/驳回。
-通过 = 核准答案以 QA chunk 走 ch03 落库流程(write_pending → vectorize_pending 同步),
-向量化成功才置「通过」——保证审核页点了通过,下一问就能检索命中(验收 3)。"""
+"""审核后台 API:待审队列列表/详情/通过(写回知识库)/驳回。
+通过 = 核准答案以 QA chunk 走 落库流程(write_pending → vectorize_pending 同步),
+向量化成功才置「通过」——保证审核页点了通过,下一问就能检索命中( 3)。"""
 import logging
 
 from fastapi import APIRouter, HTTPException

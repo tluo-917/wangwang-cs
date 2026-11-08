@@ -1,6 +1,6 @@
-"""ch10 评测:留出测试集上每类 P/R/F1 + 每类混淆矩阵 + 容错红线 + 判错样本导出。
+"""评测:留出测试集上每类 P/R/F1 + 每类混淆矩阵 + 容错红线 + 判错样本导出。
 运行:make ch10-eval。评测集扎在自家电商场景(dataset/test.jsonl),不引公开榜单。
-产物一式两份:.md 给人读、.json 给验收页读(/acceptance/eval、/acceptance/errors),同一次评测同一份数。"""
+产物一式两份:.md 给人读、.json 给页读(/acceptance/eval、/acceptance/errors),同一次评测同一份数。"""
 import datetime as dt
 import json
 import pathlib
@@ -88,7 +88,7 @@ def main() -> None:
         if set(pred_labels) != set(s["labels"]):
             err.append(f"- {s['text']}\n  标准: {s['labels']}  预测: {pred_labels}")
             # 错误方向性:漏打只记放跑、多打只记冤枉、错位两头都记——错例条数与矩阵笔数
-            # 对不上就是从这来的(验收页要把这笔账摊开,别让读者自己减)
+            # 对不上就是从这来的(页要把这笔账摊开,别让读者自己减)
             missed = [lb for lb in s["labels"] if lb not in pred_labels]
             extra = [lb for lb in pred_labels if lb not in s["labels"]]
             kind = "错位" if missed and extra else ("漏打" if missed else "多打")

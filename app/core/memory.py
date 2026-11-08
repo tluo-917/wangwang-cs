@@ -9,9 +9,9 @@ from app.core import budget
 def count_tokens(messages) -> int:
     """估算这批消息的 token。
 
-    count_tokens_approximately 默认 chars_per_token=4.0 是按英文定的,中文一个字往往
-    就是一个 token,照默认口径算会低估四倍(实测 29 个汉字被估成 12)。裁剪、预算判断
-    都走这一个入口,口径才对得齐。"""
+ count_tokens_approximately 默认 chars_per_token=4.0 是按英文定的,中文一个字往往
+ 就是一个 token,照默认口径算会低估四倍(实测 29 个汉字被估成 12)。裁剪、预算判断
+ 都走这一个入口,口径才对得齐。"""
     return count_tokens_approximately(
         messages, chars_per_token=settings.zh_chars_per_token)
 
@@ -19,9 +19,9 @@ def count_tokens(messages) -> int:
 def chars_to_tokens(n_chars: int) -> int:
     """按字数估 token,口径与 count_tokens 一致。
 
-    zh_chars_per_token 是「几个字折一个 token」,所以是除不是乘。这两个方向差 1.44 倍,
-    而且错的那一头没有任何报错——只是判据悄悄比预算严一截。凡是拿字数换 token 的地方
-    都走这里,别再各写各的。"""
+ zh_chars_per_token 是「几个字折一个 token」,所以是除不是乘。这两个方向差 1.44 倍,
+ 而且错的那一头没有任何报错——只是判据悄悄比预算严一截。凡是拿字数换 token 的地方
+ 都走这里,别再各写各的。"""
     return int(n_chars / settings.zh_chars_per_token)
 
 
@@ -32,14 +32,14 @@ def tokens_to_chars(n_tokens: int) -> int:
 
 def window_budget() -> int:
     """滑窗能用多少 token。配置里 context_window_max_tokens 填了非 0 就以它为准
-    (回滚用),否则按窗口预算算。"""
+ (回滚用),否则按窗口预算算。"""
     if settings.context_window_max_tokens > 0:
         return settings.context_window_max_tokens
     return budget.compute().sliding
 
 
 class SessionStore:
-    """内存会话存储,session_id -> 消息列表。本章不做持久化。"""
+    """内存会话存储,session_id -> 消息列表。不做持久化。"""
 
     def __init__(self) -> None:
         self._sessions: dict[str, list[BaseMessage]] = {}
@@ -62,7 +62,7 @@ def trim_history(messages: list[BaseMessage], max_tokens: int) -> list[BaseMessa
     )
 
 
-# ---- ch07 锚点切窗 + 摘要注入(三层上下文的滑窗层)----
+# ---- 锚点切窗 + 摘要注入(三层上下文的滑窗层)----
 
 _DB_ID_PREFIX = "db-"
 
@@ -95,13 +95,13 @@ def build_window(messages: list[BaseMessage], summary_upto_msg_id: int,
                  max_tokens: int | None = None) -> list[BaseMessage]:
     """按两个锚点把历史渲染成三段:
 
-      id ≤ summary_upto_msg_id            已进摘要,不出现在窗口里
-      summary_upto < id ≤ layer1_from     层 2,渲染成半压形态
-      id > layer1_from                    层 1,原样
+ id ≤ summary_upto_msg_id 已进摘要,不出现在窗口里
+ summary_upto < id ≤ layer1_from 层 2,渲染成半压形态
+ id > layer1_from 层 1,原样
 
-    锚点缺失(旧会话)或为 0 时那一刀不切,行为退化成单层原文 + token 兜底裁剪。
-    消息本身不动,变的只是渲染方式,所以同一份输入渲染多少次结果都一样。
-    只在调模型前现拼,不改 State。"""
+ 锚点缺失(旧会话)或为 0 时那一刀不切,行为退化成单层原文 + token 兜底裁剪。
+ 消息本身不动,变的只是渲染方式,所以同一份输入渲染多少次结果都一样。
+ 只在调模型前现拼,不改 State。"""
     window = messages[_index_after(messages, summary_upto_msg_id):]
     if layer1_from_msg_id:
         split = _index_after(window, layer1_from_msg_id)
@@ -123,8 +123,8 @@ def next_layer1_from(messages: list[BaseMessage], summary_upto_msg_id: int,
                      layer1_budget: int) -> int:
     """层 1 超预算时,算新的层 1 起点:从最新往回累加,累到预算为止。
 
-    一次挪到位,不是每轮微调——两次降级之间边界不动,渲染才逐字节稳定,
-    prompt cache 的前缀才保得住。"""
+ 一次挪到位,不是每轮微调——两次降级之间边界不动,渲染才逐字节稳定,
+ prompt cache 的前缀才保得住。"""
     window = messages[_index_after(messages, summary_upto_msg_id):]
     total = 0
     for i in range(len(window) - 1, -1, -1):
@@ -146,9 +146,9 @@ def summary_line(summary: str | None) -> str:
 def summary_system(summary: str | None) -> SystemMessage | None:
     """把摘要包成带标题的文本块;无摘要 None。
 
-    返回的是 SystemMessage,但调用点只取它的 .content,并进本轮材料那条 HumanMessage
-    (见 nodes._turn_context)。整条消息列表里只允许有一条 SystemMessage,摘要单独占一条
-    会把工具定义挤到可变内容之后,前缀缓存整段作废 —— 实测命中直接归零。"""
+ 返回的是 SystemMessage,但调用点只取它的 .content,并进本轮材料那条 HumanMessage
+ (见 nodes._turn_context)。整条消息列表里只允许有一条 SystemMessage,摘要单独占一条
+ 会把工具定义挤到可变内容之后,前缀缓存整段作废 —— 实测命中直接归零。"""
     if not summary:
         return None
     return SystemMessage(f"## 早前对话摘要(更早轮次已压缩,其中事实可信)\n{summary}")
@@ -169,9 +169,9 @@ def compress_reply(text: str, keep_chars: int | None = None) -> str:
 def compress_tool_result(name: str, content: str) -> str:
     """工具结果降到层 2 的形态。
 
-    小结果(订单字段那种)原样留着,下一轮追问还用得上;大块的(检索证据 3500 字)
-    压成一行标识——那份证据是某一轮用来答某一个问题的,答完就不该再占位,
-    真要数据下次实时查,比留着的旧值还新。"""
+ 小结果(订单字段那种)原样留着,下一轮追问还用得上;大块的(检索证据 3500 字)
+ 压成一行标识——那份证据是某一轮用来答某一个问题的,答完就不该再占位,
+ 真要数据下次实时查,比留着的旧值还新。"""
     if not content:
         return content
     if chars_to_tokens(len(content)) <= settings.layer2_tool_keep_tokens:

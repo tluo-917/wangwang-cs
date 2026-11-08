@@ -1,77 +1,69 @@
-# MewHelp — 电商智能客服 Agent
+# 汪汪优选 — 电商智能客服
 
-《AI Agent 智能客服实战》的配套源码。一个能查订单物流、答政策 FAQ、走退款子流程、
-挖知识补库、还能微调一个主题分类器的完整客服系统。
+我做的一个电商智能客服。用户用自然语言咨询商品、订单、物流和售后，系统先补全指代、判断意图，再决定走知识库、查业务数据，还是直接拒答。
 
-代码是随课程一章章长出来的，不分支：ch01 一个纯对话接口起步，到 ch10 收尾时是下面这套东西。
+政策类问题强制检索知识库，回答带可点击的来源编号。订单、物流、价格和库存通过工具查询真实数据，不靠模型现编。证据不够时给出兜底话术，不承诺到账时间或赔偿金额。多轮对话会做指代消解和早期内容摘要。答不上来的问题会进入待审队列，便于把缺口补回知识库。
+
+聊天页是「小汪」，支持明暗主题、流式输出、引用浮层、转人工和工单确认。
 
 ## 技术栈
 
 FastAPI + LangGraph / LangChain + SQLAlchemy / MySQL + Milvus。
 
-聊天、嵌入、重排三组上游各自直连，没有网关那一层。模型名和地址都在 `.env` 里配
-(`CHAT_*` / `EMBED_*` / `RERANK_*` 三组)，换供应商、换模型不用改代码。
+聊天、嵌入、重排三组模型各自直连。模型名和地址都在 `.env` 里配置（`CHAT_*` / `EMBED_*` / `RERANK_*`），换供应商不用改代码。
+
+## 能做什么
+
+- 多轮对话：指代补全、九类意图分流、滑窗上下文和分段摘要
+- 知识问答：文档切块、向量与关键词混合检索、重排，回答标注出处
+- 业务查询：订单、商品、物流，以及退款前的订单确认
+- 工具调用：内置工具和外部 MCP 服务统一执行，写操作需要用户确认
+- 质量与运营：证据置信度、拒答、低置信问题归并、成本观测、主题分类
 
 ## 跑起来
 
 ```bash
-cp .env.example .env      # 填 CHAT_* / EMBED_* / RERANK_* 三组
+cp .env.example .env      # 填 CHAT_* / EMBED_* / RERANK_* 
 docker compose up -d      # MySQL
-make seed                 # 灌业务测试数据
-make dev                  # 依赖容器 + MCP :8101/:8102 + 应用 :8000
+make seed                 # 灌入演示用的业务数据
+make dev                  # 启动应用 :8000，以及物流/售后 MCP :8101/:8102
 ```
 
-浏览器打开 <http://localhost:8000> 就是聊天页。
+浏览器打开 <http://localhost:8000>。
 
-**详细的安装、配置、建知识库、常见问题，看飞书那篇「MewHelp 项目源码下载」**，
-这里只留一条能把服务拉起来的最短路径。两边写岔了以那篇为准。
+| 页面 | 地址 |
+| --- | --- |
+| 聊天 | `/` |
+| 知识库录入 | `/kb` |
+| 待审队列 | `/review` |
+| 检索评估 | `/rag-eval` |
+| 观测与成本 | `/observability` |
+| 主题分布 | `/topics` |
+| 分类器 | `/acceptance` |
 
-## 代码怎么组织
+`make test` 跑单元测试，不请求真实模型。`make help` 可以查看建库、评估和其他命令。
 
-| 位置 | 装的是什么 |
-| - | - |
-| `app/api/` | HTTP 入口。聊天、Agent、知识库录入、复核、验收页、成本看板 |
-| `app/graph/` | LangGraph 那张图。`state` 状态、`nodes` 节点、`routing` 分流规则、`build` 组装 |
-| `app/core/` | 单点能力。上游客户端、检索、重排、意图、指代、摘要、置信度、飞轮、可观测 |
-| `app/kb/` | 知识怎么进库。切块、嵌入、双写 MySQL 与 Milvus、去重、从对话里挖问答对 |
-| `app/tools/` | 工具系统。内置 `@tool`、MCP 客户端、注册表、统一执行引擎 |
-| `app/db/` | 表模型与仓储 |
-| `app/static/` | 前端页面。聊天、知识库录入、飞轮待审、观测与成本、主题分布、分类器验收 |
-| `mcp_servers/` | 两台业务 MCP Server，物流和售后各一台，独立进程 |
-| `sql/` | 各章的建表与迁移，容器首启按文件名顺序自动执行 |
-| `scripts/` | 建库、评估、微调这些离线活 |
-| `docs/superpowers/` | 各章的 spec 和 plan。课程实战篇教的就是这套流程，留着当范本 |
-| `primer/` | 前置篇两篇的配套例子（大模型是什么、Agent 怎么动起来），各自独立，跟项目其他代码没有依赖关系，`.env` 用同一份 |
+## 代码结构
 
-## 各章长出了什么，怎么验
-
-`make test` 跑全部单测，不打真实模型。下面这些要真服务在跑。
-
-| 章 | 这一章长出来的东西 | 验收 |
-| - | - | - |
-| ch01 | 流式对话、结构化提取 | `make eval` |
-| ch02 | 五个 `@tool` 业务工具，单轮 Function Calling | `make eval-agent` |
-| ch03 | 切块、嵌入、MySQL 与 Milvus 双写、对话挖知识 | `make kb-build` `make kb-vectorize` `make eval-retrieval` |
-| ch04 | 混合检索、RRF、重排、Query 改写、四策略评估 | `make smoke-rag` `make eval-rag` |
-| ch05 | LangGraph workflow 骨架 + 主力 Agent 的 ReAct 环 | `make eval-ch05` |
-| ch06 | 分流器、指代消解、退款子流程的 interrupt/resume | `make smoke-interrupt` `make eval-ch06` |
-| ch07 | 上下文管理。滑窗、摘要、前缀缓存 | `make eval-ch07` |
-| ch08 | 工具系统。MCP 动态发现、统一执行引擎、审计日志 | `make eval-ch08` |
-| ch09 | Langfuse 自部署、数据飞轮、成本账 | `make langfuse-up` `make flywheel` `make eval-flywheel` `make cost-report` |
-| ch10 | 主题分类器。语料、微调、阈值扫描、ONNX 推理服务 | `make ch10-corpus` `make ch10-train` `make ch10-eval` |
-
-每条命令的前置条件（哪些服务得先起、哪张表得先建）写在飞书那篇文档的「各章验收」段里。
-`make help` 也能看到带说明的完整目标清单。
+| 位置 | 内容 |
+| --- | --- |
+| `app/api/` | HTTP 接口：聊天、知识库、复核、观测 |
+| `app/graph/` | 对话流程图：状态、节点和分流 |
+| `app/core/` | 模型接入、检索、重排、意图、指代、摘要、置信度 |
+| `app/kb/` | 切块、嵌入、MySQL 与 Milvus 双写、去重 |
+| `app/tools/` | 内置工具、MCP 客户端和统一执行 |
+| `app/db/` | 表模型和仓储 |
+| `app/static/` | 聊天页和后台页面 |
+| `mcp_servers/` | 物流、售后两个独立服务 |
+| `sql/` | 建表脚本，数据库首次启动时按文件名顺序执行 |
+| `scripts/` | 建库、评估和分类训练 |
 
 ## 端口
 
-| 端口 | 是什么 |
-| - | - |
+| 端口 | 服务 |
+| --- | --- |
 | 8000 | 应用 |
-| 8101 / 8102 | 业务 MCP Server，物流 / 售后 |
-| 8110 | ch10 主题分类器推理服务（`make classifier-up` 之后） |
+| 8101 / 8102 | 物流 / 售后 MCP |
+| 8110 | 主题分类推理（`make classifier-up` 之后） |
 | 3000 | Langfuse（`make langfuse-up` 之后） |
 | 19530 | Milvus |
-
-应用那几个页面：`/` 聊天、`/kb` 知识库录入、`/review` 飞轮待审、`/observability` 观测与成本、
-`/topics` 主题分布、`/acceptance` 分类器验收。
